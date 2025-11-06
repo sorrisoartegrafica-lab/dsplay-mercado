@@ -8,28 +8,34 @@
     --cor-texto-preco: #FFFFFF; /* Branco padrão */
 }
 
-body {
+/* --- MUDANÇA PRINCIPAL (Problema 1) --- */
+/* Força a página inteira a ocupar 100% da tela do player */
+html, body {
     margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
     overflow: hidden; /* Evita barras de rolagem */
-    font-family: Arial, sans-serif; /* Fonte padrão */
-    height: 100vh; /* Ocupa 100% da altura da viewport */
-    width: 100vw; /* Ocupa 100% da largura da viewport */
     background-color: #000; /* Fundo preto caso tudo falhe */
 }
 
 #app {
     width: 100%;
     height: 100%;
-    position: relative; /* Essencial para o posicionamento absoluto */
+    /* MUDANÇA: 'absolute' força a ancoragem no canto 0,0 da tela */
+    position: absolute; 
+    top: 0;
+    left: 0;
     display: flex;
     flex-direction: column; /* Organiza os fundos (vermelho em cima, amarelo embaixo) */
 }
+/* --- FIM DA MUDANÇA --- */
+
 
 /* --- ESTILOS DE FUNDO (Expansível) --- */
 
 #fundo-principal {
     background-color: var(--cor-fundo-principal);
-    /* Adiciona um gradiente sutil para não ficar 'chapado' */
     background-image: linear-gradient(135deg, var(--cor-fundo-principal) 0%, color-mix(in srgb, var(--cor-fundo-principal) 90%, black 10%) 100%);
     flex-grow: 1; /* Ocupa o máximo de espaço vertical */
     position: relative;
@@ -52,7 +58,6 @@ body {
 
 /* --- ESTILOS DE CONTEÚDO (Posicionamento Absoluto) --- */
 
-/* Classe base para todos os elementos */
 .elemento-animado {
     position: absolute;
     opacity: 0; /* Começa invisível */
@@ -68,13 +73,11 @@ body {
     height: 25%;
     display: flex;
     justify-content: center;
-    align-items: center;
-    /* Removemos o 'Sua Logo Aqui' branco, então centralizamos o logo no topo */
     align-items: flex-start; 
     margin-top: 2vh;
 }
 #logo-img {
-    max-width: 40%; /* Ajuste o tamanho do logo como preferir */
+    max-width: 40%; 
     max-height: 100%;
     object-fit: contain;
 }
@@ -88,13 +91,13 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 11; /* Produto pode ficar na frente da descrição se cruzar */
+    z-index: 11; 
 }
 #produto-img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 0.5vh 1.5vh rgba(0,0,0,0.3)); /* Sombra no produto */
+    filter: drop-shadow(0 0.5vh 1.5vh rgba(0,0,0,0.3));
 }
 
 /* (Área Roxa) - Descrição */
@@ -107,13 +110,13 @@ body {
     align-items: center;
 }
 #descricao-texto {
-    font-size: 3.5vh; /* Tamanho da fonte baseado na altura da tela */
+    font-size: 3.5vh; 
     color: var(--cor-texto-descricao);
     font-weight: bold;
     text-align: left;
     margin: 0;
     line-height: 1.2;
-    text-shadow: 0 0.2vh 0.4vh rgba(0,0,0,0.3); /* Sombra no texto */
+    text-shadow: 0 0.2vh 0.4vh rgba(0,0,0,0.3);
 }
 
 /* (Área Rosa) - Preço */
@@ -123,10 +126,10 @@ body {
     width: 35%;
     height: 15%;
     display: flex;
-    align-items: baseline; /* Alinha R$ e preço */
+    align-items: baseline; 
     color: var(--cor-texto-preco);
     font-weight: bolder;
-    text-shadow: 0 0.2vh 0.4vh rgba(0,0,0,0.3); /* Sombra no texto */
+    text-shadow: 0 0.2vh 0.4vh rgba(0,0,0,0.3);
 }
 .simbolo-real {
     font-size: 3.5vh;
@@ -137,7 +140,7 @@ body {
     line-height: 1;
 }
 
-/* --- ANIMAÇÕES (Idênticas ao anterior) --- */
+/* --- ANIMAÇÕES --- */
 
 .hidden { opacity: 0; }
 
@@ -177,10 +180,8 @@ body {
     to { opacity: 0; }
 }
 
-/* --- Ajustes para modo Paisagem (Horizontal) --- */
+/* --- Media Queries (Responsivo) --- */
 @media (orientation: landscape) {
-    /* Ajusta o posicionamento para telas horizontais */
-    
     #logo-container {
         top: 5%; left: 35%; width: 30%; height: 20%;
         align-items: center;
