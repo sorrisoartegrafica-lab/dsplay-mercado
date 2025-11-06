@@ -32,8 +32,8 @@ body {
     right: 0;
     bottom: 0;
     
-    display: flex;
-    flex-direction: column; 
+    /* --- MUDANÇA: 'display: flex' removido --- */
+    /* Não é mais um container flex. É apenas uma âncora. */
 }
 /* --- FIM DA MUDANÇA --- */
 
@@ -43,21 +43,33 @@ body {
 #fundo-principal {
     background-color: var(--cor-fundo-principal);
     background-image: linear-gradient(135deg, var(--cor-fundo-principal) 0%, color-mix(in srgb, var(--cor-fundo-principal) 90%, black 10%) 100%);
-    flex-grow: 1; 
-    position: relative;
-    z-index: 1;
+    
+    /* --- MUDANÇA: Trava o fundo vermelho na tela inteira --- */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Camada 1 */
 }
 
 #fundo-secundario {
     background-color: var(--cor-fundo-secundario);
-    height: 15vh; 
+
+    /* --- MUDANÇA: Trava o fundo amarelo na parte de baixo --- */
+    position: absolute;
+    left: 0;
+    bottom: 0;
     width: 100%;
-    position: relative;
+    height: 20vh; /* Altura um pouco maior para a curva */
+    
     clip-path: ellipse(150% 100% at 50% 100%);
-    transform: translateY(-5vh); 
     box-shadow: 0 -1vh 2vh rgba(0,0,0,0.2); 
-    z-index: 2; 
+    z-index: 2; /* Camada 2 (em cima do vermelho) */
+    
+    /* 'transform' removido, não é mais necessário */
 }
+
 
 /* --- ESTILOS DE CONTEÚDO (Layout Vertical Padrão) --- */
 
@@ -65,7 +77,7 @@ body {
     position: absolute;
     opacity: 0; 
     box-sizing: border-box;
-    z-index: 10; 
+    z-index: 10; /* Camada 10 (em cima de tudo) */
 }
 
 /* (Área Azul) - Logo */
@@ -113,7 +125,6 @@ body {
     align-items: center;
 }
 #descricao-texto {
-    /* --- MUDANÇA: Fonte menor para caber --- */
     font-size: 3.2vh; 
     color: var(--cor-texto-descricao);
     font-weight: bold;
@@ -127,7 +138,6 @@ body {
 #preco-container {
     top: 65%;
     left: 10%;
-    /* --- MUDANÇA: Caixa de preço mais larga para não cortar --- */
     width: 40%; 
     height: 15%;
     display: flex;
@@ -141,7 +151,6 @@ body {
     margin-right: 8px;
 }
 #preco-texto {
-    /* --- MUDANÇA: Fonte menor para caber --- */
     font-size: 9vh; 
     line-height: 1;
 }
