@@ -8,24 +8,32 @@
     --cor-texto-preco: #FFFFFF; /* Branco padrão */
 }
 
-/* --- MUDANÇA PRINCIPAL (Tela Cheia Mais Robusta) --- */
-html, body {
+/* --- MUDANÇA (Tela Cheia Mais Robusta) --- */
+/* Esta é a correção para as 'bordas pretas' e 'encolhimento' */
+html {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+body {
+    height: 100%;
+    width: 100%;
     margin: 0;
     padding: 0;
-    width: 100vw; /* Usa 100% da largura da viewport */
-    height: 100vh; /* Usa 100% da altura da viewport */
-    overflow: hidden; /* Evita barras de rolagem */
-    background-color: #000; /* Fundo preto caso tudo falhe */
+    overflow: hidden; 
+    background-color: #000; 
 }
 
+/* Usamos 'position: fixed' para 'travar' o app na tela cheia */
 #app {
-    width: 100%;
-    height: 100%;
-    position: absolute; 
+    position: fixed;
     top: 0;
     left: 0;
+    right: 0;
+    bottom: 0;
+    
     display: flex;
-    flex-direction: column; /* Organiza os fundos (vermelho em cima, amarelo embaixo) */
+    flex-direction: column; 
 }
 /* --- FIM DA MUDANÇA --- */
 
@@ -35,32 +43,29 @@ html, body {
 #fundo-principal {
     background-color: var(--cor-fundo-principal);
     background-image: linear-gradient(135deg, var(--cor-fundo-principal) 0%, color-mix(in srgb, var(--cor-fundo-principal) 90%, black 10%) 100%);
-    flex-grow: 1; /* Ocupa o máximo de espaço vertical */
+    flex-grow: 1; 
     position: relative;
     z-index: 1;
 }
 
 #fundo-secundario {
     background-color: var(--cor-fundo-secundario);
-    height: 15vh; /* Altura da faixa amarela */
+    height: 15vh; 
     width: 100%;
     position: relative;
-    
-    /* --- A CURVA ORGÂNICA E SOMBRA --- */
     clip-path: ellipse(150% 100% at 50% 100%);
-    transform: translateY(-5vh); /* Puxa para cima, sobrepondo o vermelho */
-    box-shadow: 0 -1vh 2vh rgba(0,0,0,0.2); /* Sombra na curva */
-    z-index: 2; /* Fica sobre o fundo vermelho */
+    transform: translateY(-5vh); 
+    box-shadow: 0 -1vh 2vh rgba(0,0,0,0.2); 
+    z-index: 2; 
 }
 
-
-/* --- ESTILOS DE CONTEÚDO (Posicionamento Absoluto) --- */
+/* --- ESTILOS DE CONTEÚDO (Layout Vertical Padrão) --- */
 
 .elemento-animado {
     position: absolute;
-    opacity: 0; /* Começa invisível */
+    opacity: 0; 
     box-sizing: border-box;
-    z-index: 10; /* Garante que fiquem na frente do fundo */
+    z-index: 10; 
 }
 
 /* (Área Azul) - Logo */
@@ -102,13 +107,14 @@ html, body {
 #descricao-container {
     top: 45%;
     left: 10%;
-    width: 35%;
+    width: 35%; /* Largura da caixa de texto */
     height: 20%;
     display: flex;
     align-items: center;
 }
 #descricao-texto {
-    font-size: 3.5vh; 
+    /* --- MUDANÇA: Fonte menor para caber --- */
+    font-size: 3.2vh; 
     color: var(--cor-texto-descricao);
     font-weight: bold;
     text-align: left;
@@ -121,7 +127,8 @@ html, body {
 #preco-container {
     top: 65%;
     left: 10%;
-    width: 35%;
+    /* --- MUDANÇA: Caixa de preço mais larga para não cortar --- */
+    width: 40%; 
     height: 15%;
     display: flex;
     align-items: baseline; 
@@ -130,11 +137,12 @@ html, body {
     text-shadow: 0 0.2vh 0.4vh rgba(0,0,0,0.3);
 }
 .simbolo-real {
-    font-size: 3.5vh;
+    font-size: 3.2vh; /* Diminuído */
     margin-right: 8px;
 }
 #preco-texto {
-    font-size: 10vh;
+    /* --- MUDANÇA: Fonte menor para caber --- */
+    font-size: 9vh; 
     line-height: 1;
 }
 
@@ -178,8 +186,10 @@ html, body {
     to { opacity: 0; }
 }
 
-/* --- Media Queries (Responsivo) --- */
+/* --- Media Query Horizontal (IGNORAR POR ENQUANTO) --- */
+/* Nós vamos apagar isso e fazer um arquivo separado na Etapa 2 */
 @media (orientation: landscape) {
+    /* Este layout está quebrado - não se preocupe com ele agora */
     #logo-container {
         top: 5%; left: 35%; width: 30%; height: 20%;
         align-items: center;
