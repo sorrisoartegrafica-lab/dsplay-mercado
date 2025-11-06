@@ -156,18 +156,29 @@ body {
 }
 
 
-/* --- MUDANÇA: QR Code e Seta REPOSICIONADOS e com unidades VW --- */
+/* --- MUDANÇA: NOVO MÉTODO DA "CAIXINHA" --- */
 
-/* QR Code (Canto Inferior Esquerdo) */
+/* 1. A "Caixinha" (Wrapper) */
+#info-inferior-wrapper {
+    bottom: 3vh; /* Posição da caixinha */
+    left: 3vw;
+    width: 94vw; /* Largura total da caixinha */
+    height: auto;
+    z-index: 10;
+    
+    /* Mágica do Flex: alinha os filhos (QR e Seta) */
+    display: flex;
+    align-items: center; /* Alinha verticalmente */
+}
+
+/* 2. O QR Code (dentro da caixinha) */
 #qrcode-container {
-    bottom: 3vh; /* 3% de altura de baixo */
-    left: 5vw; /* 5% da largura da esquerda */
     width: 30vw; /* 30% da largura da tela */
     height: 30vw; /* 30% da largura (para ser quadrado) */
-    z-index: 10;
-    background-color: white; /* Fundo branco para QR Code */
-    padding: 1.5vw; /* Borda de 1.5% da largura */
+    background-color: white; 
+    padding: 1.5vw; 
     box-sizing: border-box;
+    flex-shrink: 0; /* Não deixa o QR encolher */
 }
 #qrcode-img {
     width: 100%;
@@ -175,17 +186,14 @@ body {
     object-fit: contain;
 }
 
-/* Caixa de Texto da Seta */
+/* 3. A Caixa da Seta (dentro da caixinha) */
 #qr-texto-container {
-    bottom: 8vh; /* Posição Y */
-    left: 38vw; /* Posição X (5vw do QR + 30vw do QR + 3vw de espaço) */
-    width: 58vw; /* Largura da caixa de texto (até a borda) */
-    height: auto;
-    background-color: var(--cor-seta-qr); /* Cor dinâmica */
+    background-color: var(--cor-seta-qr);
     padding: 1.5vh 2vh;
     border-radius: 1vh;
     position: relative;
-    z-index: 10;
+    margin-left: 3vw; /* Espaço entre o QR e a caixa */
+    flex-grow: 1; /* Deixa a caixa esticar */
 }
 /* A Seta (feita com CSS) */
 #qr-texto-container::before {
@@ -199,7 +207,7 @@ body {
     height: 0; 
     border-top: 1.5vw solid transparent;
     border-bottom: 1.5vw solid transparent;
-    border-right: 3vw solid var(--cor-seta-qr); /* Seta da mesma cor */
+    border-right: 3vw solid var(--cor-seta-qr); 
 }
 #qr-texto {
     margin: 0;
@@ -213,27 +221,22 @@ body {
 
 /* --- ANIMAÇÕES (Mesmas de antes) --- */
 /* (O código de @keyframes e .slideIn etc. permanece o mesmo) */
-
 .hidden { opacity: 0; }
-
 .slideInUp { animation: slideInUp 0.8s ease-out forwards; }
 @keyframes slideInUp {
     from { opacity: 0; transform: translateY(100%); }
     to { opacity: 1; transform: translateY(0); }
 }
-
 .slideInRight { animation: slideInRight 0.8s ease-out forwards; }
 @keyframes slideInRight {
     from { opacity: 0; transform: translateX(100%); }
     to { opacity: 1; transform: translateX(0); }
 }
-
 .slideInLeft { animation: slideInLeft 0.8s ease-out forwards; }
 @keyframes slideInLeft {
     from { opacity: 0; transform: translateX(-100%); }
     to { opacity: 1; transform: translateX(0); }
 }
-
 .typewriter {
     opacity: 1;
     animation: typewriter 1s steps(4) forwards;
@@ -245,7 +248,6 @@ body {
     from { width: 0; }
     to { width: 100%; }
 }
-
 .fadeOut { animation: fadeOut 0.5s ease-in forwards; }
 @keyframes fadeOut {
     from { opacity: 1; }
