@@ -84,9 +84,9 @@ body {
 /* NOVO: Selo (Esquerda) */
 #selo-container {
     top: 20%;
-    left: 5%;
-    width: 40%;
-    height: 20%;
+    left: 3%;
+    width: 50%; /* --- MUDANÇA: Selo maior (era 40%) --- */
+    height: 25%; /* --- MUDANÇA: Selo maior (era 20%) --- */
     z-index: 12; /* Na frente do produto */
 }
 #selo-img {
@@ -117,7 +117,7 @@ body {
 #descricao-container {
     top: 45%;
     left: 5%;
-    width: 40%; 
+    width: 40%; /* --- MUDANÇA: Um pouco mais largo */ 
     height: 20%;
     display: flex;
     align-items: center;
@@ -157,8 +157,8 @@ body {
 
 /* NOVO: QR Code (Canto Inferior Esquerdo) */
 #qrcode-container {
-    bottom: 3%;
-    left: 3%;
+    bottom: 3vh; /* --- MUDANÇA: Unidade vh para consistência */
+    left: 3vh; /* --- MUDANÇA: Unidade vh para consistência */
     width: 18vh; /* Tamanho quadrado */
     height: 18vh;
     z-index: 10;
@@ -174,9 +174,9 @@ body {
 
 /* NOVO: Caixa de Texto da Seta */
 #qr-texto-container {
-    bottom: 8%;
-    left: 20%; /* Posição à direita do QR Code */
-    width: 40%; /* Largura da caixa */
+    bottom: 8vh; /* --- MUDANÇA: Unidade vh para consistência */
+    left: 23vh; /* --- MUDANÇA: Posição CORRIGIDA (3vh do QR + 18vh do QR + 2vh de espaço) */
+    width: 45%; /* --- MUDANÇA: Um pouco mais largo */
     height: auto;
     background-color: var(--cor-seta-qr); /* Cor dinâmica */
     padding: 1.5vh 2vh;
