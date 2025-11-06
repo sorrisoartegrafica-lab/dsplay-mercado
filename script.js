@@ -1,4 +1,4 @@
-// script.js - Versão FINAL com Cache-First e Preload
+// script.js - Layout Final com QR/Selo DINÂMICOS POR PRODUTO
 
 // ##################################################################
 //  COLE A URL DA SUA API (DO GOOGLE APPS SCRIPT) AQUI
@@ -20,13 +20,26 @@ const logoContainer = document.getElementById('logo-container');
 const produtoContainer = document.getElementById('produto-container');
 const descricaoContainer = document.getElementById('descricao-container');
 const precoContainer = document.getElementById('preco-container');
+const seloContainer = document.getElementById('selo-container');
+const qrcodeContainer = document.getElementById('qrcode-container');
+const qrTextoContainer = document.getElementById('qr-texto-container');
+
 
 const logoImg = document.getElementById('logo-img');
 const produtoImg = document.getElementById('produto-img');
 const descricaoTexto = document.getElementById('descricao-texto');
 const precoTexto = document.getElementById('preco-texto');
+const seloImg = document.getElementById('selo-img');
+const qrcodeImg = document.getElementById('qrcode-img');
+const qrTexto = document.getElementById('qr-texto');
 
-const elementosAnimadosProduto = [produtoContainer, descricaoContainer, precoContainer];
+
+// --- MUDANÇA NA LÓGICA DE ANIMAÇÃO ---
+// Itens Estáticos (Só animam 1 vez)
+const elementosEstaticosAnimados = [logoContainer, qrTextoContainer];
+// Itens Rotativos (Animam a cada 5s)
+const elementosAnimadosProduto = [produtoContainer, descricaoContainer, precoContainer, seloContainer, qrcodeContainer];
+
 
 // --- Constantes de Tempo ---
 const PRODUTOS_POR_LOTE = 3; // Mostrar 3 produtos
@@ -40,22 +53,35 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// 1. Função para APLICAR A CONFIGURAÇÃO DO MERCADO (Cores e Logo)
+// 1. Função para APLICAR A CONFIGURAÇÃO DO MERCADO (Itens Estáticos)
 function applyConfig(config) {
+    // Aplica Cores Globais
     document.documentElement.style.setProperty('--cor-fundo-principal', config.COR_FUNDO_PRINCIPAL);
     document.documentElement.style.setProperty('--cor-fundo-secundario', config.COR_FUNDO_SECUNDARIO);
     document.documentElement.style.setProperty('--cor-texto-descricao', config.COR_TEXTO_DESCRICAO);
     document.documentElement.style.setProperty('--cor-texto-preco', config.COR_TEXTO_PRECO);
+    
+    // Aplica Itens Estáticos
     logoImg.src = config.LOGO_MERCADO_URL;
-    logoContainer.classList.add('slideInUp'); 
+    qrTexto.textContent = config.QR_TEXTO;
+    
+    // Aplica Cor da Seta
+    document.documentElement.style.setProperty('--cor-seta-qr', config.QR_COR_SETA || '#00A300');
+
+    // Anima a entrada dos elementos estáticos (Logo, Texto do QR)
+    elementosEstaticosAnimados.forEach(el => el.classList.add('slideInUp'));
 }
 
-// 2. Função para ATUALIZAR o conteúdo do PRODUTO
+// 2. Função para ATUALIZAR o conteúdo do PRODUTO (itens que rotacionam)
 function updateContent(item) {
+    // Atualiza os 5 itens rotativos
     produtoImg.src = item.IMAGEM_PRODUTO_URL;
     descricaoTexto.textContent = item.NOME_PRODUTO;
     precoTexto.textContent = item.PRECO;
+    seloImg.src = item.SELO_URL;
+    qrcodeImg.src = item.QR_CODE_URL;
 
+    // Prepara a animação de máquina de escrever
     const precoElement = document.getElementById('preco-texto');
     precoContainer.classList.remove('typewriter');
     void precoContainer.offsetWidth; 
@@ -70,15 +96,22 @@ function updateContent(item) {
 // 3. Função para EXECUTAR a sequência de animação de ENTRADA do PRODUTO
 async function playEntranceAnimation() {
     elementosAnimadosProduto.forEach(el => el.classList.remove('fadeOut'));
+    
+    // Animação em paralelo para economizar tempo
     produtoContainer.classList.add('slideInRight');
-    await sleep(ANIMATION_DELAY);
+    seloContainer.classList.add('slideInLeft'); // Selo entra com a descrição
     descricaoContainer.classList.add('slideInLeft');
-    await sleep(ANIMATION_DELAY);
+    qrcodeContainer.classList.add('slideInUp'); // QR entra de baixo
+    
+    await sleep(ANIMATION_DELAY); // Espera a animação principal
+
+    // Preço entra por último
     precoContainer.classList.add('typewriter');
 }
 
 // 4. Função para EXECUTAR a animação de SAÍDA do PRODUTO
 async function playExitAnimation() {
+    // Todos os 5 itens rotativos saem juntos
     elementosAnimadosProduto.forEach(el => {
         el.className = 'elemento-animado';
         el.classList.add('fadeOut');
@@ -103,11 +136,10 @@ function runInternalRotation(items) {
 }
 
 
-// 6. FUNÇÃO DE INICIALIZAÇÃO (Totalmente Modificada para Lotes)
+// 6. FUNÇÃO DE INICIALIZAÇÃO (Lógica de Cache)
 async function init() {
     let cachedData = null;
     try {
-        // 1. Tenta carregar do cache
         const cachedString = localStorage.getItem(CACHE_KEY);
         if (cachedString) {
             cachedData = JSON.parse(cachedString);
@@ -115,22 +147,18 @@ async function init() {
         }
     } catch (e) {
         console.error("Erro ao ler cache", e);
-        cachedData = null; // Invalida o cache se estiver corrompido
+        cachedData = null;
     }
 
     if (cachedData) {
-        // 2a. Se TEM cache, inicia o template IMEDIATAMENTE
         runTemplate(cachedData);
-        
-        // 3a. E busca novos dados em segundo plano (sem 'await')
-        fetchFromNetwork(); 
+        fetchFromNetwork(); // Atualiza em segundo plano
     } else {
-        // 2b. Se NÃO TEM cache (primeira vez)
         console.log("Cache vazio. Buscando da rede...");
         try {
-            const newData = await fetchFromNetwork(); // Espera a rede
+            const newData = await fetchFromNetwork(); 
             if(newData) {
-                runTemplate(newData); // Inicia o template com os dados novos
+                runTemplate(newData); 
             } else {
                 throw new Error("Falha ao buscar dados da rede");
             }
@@ -141,30 +169,28 @@ async function init() {
     }
 }
 
-// 7. NOVA FUNÇÃO: Busca dados da rede e salva no cache
+// 7. Busca dados da rede e salva no cache
 async function fetchFromNetwork() {
     try {
         const response = await fetch(API_URL);
         if (!response.ok) throw new Error('Resposta da rede não foi OK');
         const data = await response.json();
         
-        // Salva no cache para a próxima vez
         localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         console.log("Cache atualizado com novos dados da rede.");
 
-        // *** MUDANÇA: Inicia o pré-carregamento das imagens ***
         if (data.produtos) {
-            preloadImages(data.produtos);
+            preloadImages(data.produtos, data.configMercado);
         }
         
         return data;
     } catch (error) {
         console.error("Falha ao buscar dados da rede:", error);
-        return null; // Retorna nulo em caso de falha
+        return null; 
     }
 }
 
-// 8. NOVA FUNÇÃO: Contém a lógica de exibição
+// 8. Lógica de exibição
 function runTemplate(data) {
     try {
         configMercado = data.configMercado;
@@ -176,6 +202,7 @@ function runTemplate(data) {
             return;
         }
 
+        // Aplica todos os itens estáticos (Logo, Texto do QR, Cores)
         applyConfig(configMercado);
         
         const totalBatches = Math.ceil(produtos.length / PRODUTOS_POR_LOTE);
@@ -189,8 +216,9 @@ function runTemplate(data) {
             produtos[startIndex], 
             produtos[startIndex + 1], 
             produtos[startIndex + 2]
-        ].filter(Boolean); // '.filter(Boolean)' remove 'undefined'
+        ].filter(Boolean); 
 
+        // Inicia a rotação dos itens dinâmicos
         runInternalRotation(itemsToShow);
 
     } catch (error) {
@@ -199,16 +227,19 @@ function runTemplate(data) {
     }
 }
 
-// 9. *** NOVA FUNÇÃO: Pré-carregamento de Imagens ***
-function preloadImages(produtosArray) {
+// 9. Pré-carregamento de Imagens
+function preloadImages(produtosArray, config) {
     console.log("Iniciando pré-carregamento de imagens...");
+    // Pré-carrega imagens dos produtos (Produto, Selo, QR)
     produtosArray.forEach(produto => {
-        if (produto.IMAGEM_PRODUTO_URL) {
-            const img = new Image();
-            img.src = produto.IMAGEM_PRODUTO_URL;
-        }
+        if (produto.IMAGEM_PRODUTO_URL) (new Image()).src = produto.IMAGEM_PRODUTO_URL;
+        if (produto.SELO_URL) (new Image()).src = produto.SELO_URL;
+        if (produto.QR_CODE_URL) (new Image()).src = produto.QR_CODE_URL;
     });
+    
+    // Pré-carrega imagem da config (Logo)
+    if (config.LOGO_MERCADO_URL) (new Image()).src = config.LOGO_MERCADO_URL;
 }
 
-// Inicia tudo assim que o DOM estiver pronto (mais rápido que 'window.onload')
+// Inicia tudo
 document.addEventListener('DOMContentLoaded', init);
