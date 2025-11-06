@@ -185,4 +185,75 @@ body {
     object-fit: contain;
 }
 
-/* 3.
+/* 3. A Caixa da Seta (dentro da caixinha) */
+#qr-texto-container {
+    background-color: var(--cor-seta-qr);
+    padding: 1.5vh 2vh;
+    border-radius: 1vh;
+    position: relative;
+    margin-left: 3vw; 
+    flex-grow: 1; /* Se ajusta ao texto (como pedido) */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* --- MUDANÇA: Sombra leve --- */
+}
+/* A Seta (feita com CSS) */
+#qr-texto-container::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    
+    left: -2.8vw; 
+    width: 0; 
+    height: 0; 
+    border-top: 1.5vw solid transparent;
+    border-bottom: 1.5vw solid transparent;
+    border-right: 3vw solid var(--cor-seta-qr); 
+}
+#qr-texto {
+    margin: 0;
+    color: white;
+    font-size: 3vw; 
+    font-weight: bold;
+    text-align: center;
+}
+/* --- FIM DAS MUDANÇAS --- */
+
+
+/* --- ANIMAÇÕES (Mesmas de antes) --- */
+.hidden { opacity: 0; }
+.slideInUp { animation: slideInUp 0.8s ease-out forwards; }
+@keyframes slideInUp {
+    from { opacity: 0; transform: translateY(100%); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.slideInRight { animation: slideInRight 0.8s ease-out forwards; }
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+}
+.slideInLeft { animation: slideInLeft 0.8s ease-out forwards; }
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-100%); }
+    to { opacity: 1; transform: translateX(0); }
+}
+.typewriter {
+    opacity: 1;
+    animation: typewriter 1s steps(4) forwards;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 0;
+}
+@keyframes typewriter {
+    from { width: 0; }
+    to { width: 100%; }
+}
+.fadeOut { animation: fadeOut 0.5s ease-in forwards; }
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* --- Media Query Horizontal (IGNORAR POR ENQUANTO) --- */
+@media (orientation: landscape) {
+    /* Layout horizontal ainda precisa ser feito */
+}
