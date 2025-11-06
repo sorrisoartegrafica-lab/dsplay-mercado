@@ -21,7 +21,6 @@ const produtoContainer = document.getElementById('produto-container');
 const descricaoContainer = document.getElementById('descricao-container');
 const precoContainer = document.getElementById('preco-container');
 const seloContainer = document.getElementById('selo-container');
-// NOVO: A caixinha principal
 const infoInferiorWrapper = document.getElementById('info-inferior-wrapper');
 
 
@@ -30,12 +29,10 @@ const produtoImg = document.getElementById('produto-img');
 const descricaoTexto = document.getElementById('descricao-texto');
 const precoTexto = document.getElementById('preco-texto');
 const seloImg = document.getElementById('selo-img');
-// Itens dentro da caixinha
 const qrcodeImg = document.getElementById('qrcode-img');
 const qrTexto = document.getElementById('qr-texto');
 
 
-// --- MUDANÇA NA LÓGICA DE ANIMAÇÃO ---
 // Itens Estáticos (Só animam 1 vez)
 const elementosEstaticosAnimados = [logoContainer]; // SÓ O LOGO
 // Itens Rotativos (Animam a cada 5s)
@@ -44,9 +41,8 @@ const elementosAnimadosProduto = [
     descricaoContainer, 
     precoContainer, 
     seloContainer, 
-    infoInferiorWrapper // A "CAIXINHA" inteira agora é rotativa
+    infoInferiorWrapper // A "CAIXINHA" inteira
 ];
-// --- FIM DA MUDANÇA ---
 
 
 // --- Constantes de Tempo ---
@@ -54,7 +50,7 @@ const PRODUTOS_POR_LOTE = 3; // Mostrar 3 produtos
 const DURACAO_TOTAL_SLOT = 15000; // 15 segundos
 const DURACAO_POR_PRODUTO = DURACAO_TOTAL_SLOT / PRODUTOS_POR_LOTE; // 5000ms (5s) por produto
 
-const ANIMATION_DELAY = 800; // 0.8s
+const ANIMATION_DELAY = 1000; // 1 segundo (dando mais tempo para a animação do preço)
 const EXIT_ANIMATION_DURATION = 500; // 0.5s
 
 function sleep(ms) {
@@ -85,7 +81,7 @@ function updateContent(item) {
     descricaoTexto.textContent = item.NOME_PRODUTO;
     precoTexto.textContent = item.PRECO;
     seloImg.src = item.SELO_URL;
-    qrcodeImg.src = item.QR_CODE_URL; // Só atualiza o QR Code
+    qrcodeImg.src = item.QR_CODE_URL; 
 
     // Prepara a animação de máquina de escrever
     const precoElement = document.getElementById('preco-texto');
@@ -94,26 +90,26 @@ function updateContent(item) {
     precoContainer.style.animation = 'none'; 
     
     const steps = (item.PRECO && item.PRECO.length > 0) ? item.PRECO.length : 1;
-    const duration = steps * 0.15; 
+    // Duração da animação do preço
+    const duration = (steps * 0.15 < 1) ? steps * 0.15 : 1; // Máx de 1s
     
     precoContainer.style.animation = `typewriter ${duration}s steps(${steps}) forwards`;
 }
 
-// 3. Função para EXECUTAR a sequência de animação de ENTRADA do PRODUTO
+// 3. --- MUDANÇA CRÍTICA: Sincronia da Animação de ENTRADA ---
 async function playEntranceAnimation() {
+    // Remove o 'fadeOut' de todos os 5 elementos
     elementosAnimadosProduto.forEach(el => el.classList.remove('fadeOut'));
     
-    // Animação em paralelo para economizar tempo
+    // Inicia TODAS as animações ao mesmo tempo (em paralelo)
     produtoContainer.classList.add('slideInRight');
     seloContainer.classList.add('slideInLeft');
-ax
     descricaoContainer.classList.add('slideInLeft');
-    infoInferiorWrapper.classList.add('slideInUp'); // A "Caixinha" inteira entra de baixo
+    infoInferiorWrapper.classList.add('slideInUp'); // A "Caixinha" inteira
+    precoContainer.classList.add('typewriter'); // Preço entra JUNTO
     
-    await sleep(ANIMATION_DELAY); // Espera a animação principal
-
-    // Preço entra por último
-    precoContainer.classList.add('typewriter');
+    // Apenas espera o tempo da animação mais longa (1s)
+    await sleep(ANIMATION_DELAY); 
 }
 
 // 4. Função para EXECUTAR a animação de SAÍDA do PRODUTO
@@ -126,6 +122,7 @@ async function playExitAnimation() {
     await sleep(EXIT_ANIMATION_DURATION);
     elementosAnimadosProduto.forEach(el => el.classList.add('hidden'));
 }
+// --- FIM DA MUDANÇA ---
 
 // 5. Roda a "Micro-Rotação" (os 3 produtos)
 function runInternalRotation(items) {
