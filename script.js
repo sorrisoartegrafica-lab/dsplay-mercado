@@ -1,4 +1,4 @@
-// script.js - Versão FINAL com Lógica de URL (ex: ?ordem=2)
+// script.js - Versão FINAL com Cache-First e Preload
 
 // ##################################################################
 //  COLE A URL DA SUA API (DO GOOGLE APPS SCRIPT) AQUI
@@ -6,8 +6,10 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwdo-HzLZF1-_cOOJAG9L79y59kNEpaH52fdp2nuVIAGif5A3XX-dWnZ8eXouev1xXYQg/exec"; 
 // ##################################################################
 
+// --- Chave para o Cache ---
+const CACHE_KEY = 'supermercado_api_cache';
 
-// --- Configuração dos Dados (AGORA VAZIOS, VIRÃO DA API) ---
+// --- Configuração dos Dados (AGORA VAZIOS, VIRÃO DA API OU CACHE) ---
 let configMercado = {};
 let produtos = [];
 // --- Fim da Configuração ---
@@ -42,7 +44,7 @@ function sleep(ms) {
 function applyConfig(config) {
     document.documentElement.style.setProperty('--cor-fundo-principal', config.COR_FUNDO_PRINCIPAL);
     document.documentElement.style.setProperty('--cor-fundo-secundario', config.COR_FUNDO_SECUNDARIO);
-    document.documentElement.style.setProperty('--cor-texto-descricao', config.COR_TEXTO_DESCRICaO);
+    document.documentElement.style.setProperty('--cor-texto-descricao', config.COR_TEXTO_DESCRICAO);
     document.documentElement.style.setProperty('--cor-texto-preco', config.COR_TEXTO_PRECO);
     logoImg.src = config.LOGO_MERCADO_URL;
     logoContainer.classList.add('slideInUp'); 
@@ -88,9 +90,7 @@ async function playExitAnimation() {
 // 5. Roda a "Micro-Rotação" (os 3 produtos)
 function runInternalRotation(items) {
     async function showNextProduct(subIndex) {
-        // Se a planilha tiver menos de 3 produtos (ex: só 2), ele repete o primeiro.
         const item = items[subIndex % items.length];
-        
         if (subIndex > 0) {
             await playExitAnimation();
         }
@@ -102,63 +102,113 @@ function runInternalRotation(items) {
     setTimeout(() => showNextProduct(2), DURACAO_POR_PRODUTO * 2);
 }
 
-// 6. NOVA FUNÇÃO: Lê parâmetros da URL (ex: ?ordem=2)
-function getURLParameter(name) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(name);
+
+// 6. FUNÇÃO DE INICIALIZAÇÃO (Totalmente Modificada para Lotes)
+async function init() {
+    let cachedData = null;
+    try {
+        // 1. Tenta carregar do cache
+        const cachedString = localStorage.getItem(CACHE_KEY);
+        if (cachedString) {
+            cachedData = JSON.parse(cachedString);
+            console.log("Template carregado do cache.");
+        }
+    } catch (e) {
+        console.error("Erro ao ler cache", e);
+        cachedData = null; // Invalida o cache se estiver corrompido
+    }
+
+    if (cachedData) {
+        // 2a. Se TEM cache, inicia o template IMEDIATAMENTE
+        runTemplate(cachedData);
+        
+        // 3a. E busca novos dados em segundo plano (sem 'await')
+        fetchFromNetwork(); 
+    } else {
+        // 2b. Se NÃO TEM cache (primeira vez)
+        console.log("Cache vazio. Buscando da rede...");
+        try {
+            const newData = await fetchFromNetwork(); // Espera a rede
+            if(newData) {
+                runTemplate(newData); // Inicia o template com os dados novos
+            } else {
+                throw new Error("Falha ao buscar dados da rede");
+            }
+        } catch (error) {
+            console.error("Erro no init() sem cache:", error);
+            descricaoTexto.textContent = "Erro ao carregar API.";
+        }
+    }
 }
 
-
-// 7. FUNÇÃO DE INICIALIZAÇÃO (Modificada para ler a URL)
-async function init() {
+// 7. NOVA FUNÇÃO: Busca dados da rede e salva no cache
+async function fetchFromNetwork() {
     try {
-        // 1. Lê o parâmetro 'ordem' da URL. O padrão é '1' se não houver.
-        const ordem = parseInt(getURLParameter('ordem') || '1');
-        
-        // 2. Busca TODOS os dados da API (sem cache)
         const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Falha ao carregar dados da API: ' + response.statusText);
+        if (!response.ok) throw new Error('Resposta da rede não foi OK');
         const data = await response.json();
         
+        // Salva no cache para a próxima vez
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        console.log("Cache atualizado com novos dados da rede.");
+
+        // *** MUDANÇA: Inicia o pré-carregamento das imagens ***
+        if (data.produtos) {
+            preloadImages(data.produtos);
+        }
+        
+        return data;
+    } catch (error) {
+        console.error("Falha ao buscar dados da rede:", error);
+        return null; // Retorna nulo em caso de falha
+    }
+}
+
+// 8. NOVA FUNÇÃO: Contém a lógica de exibição
+function runTemplate(data) {
+    try {
         configMercado = data.configMercado;
         produtos = data.produtos;
         
         if (!produtos || produtos.length === 0) {
-            throw new Error("Nenhum produto na planilha.");
+            console.error("Nenhum produto nos dados.");
+            descricaoTexto.textContent = "Erro: Nenhum produto na planilha.";
+            return;
         }
 
-        // 3. Aplica as cores e o logo do mercado
         applyConfig(configMercado);
         
-        // 4. CALCULA o lote de produtos com base no parâmetro 'ordem'
-        // (ordem=1) -> startIndex = (1 - 1) * 3 = 0 (Produtos 0, 1, 2)
-        // (ordem=2) -> startIndex = (2 - 1) * 3 = 3 (Produtos 3, 4, 5)
-        // (ordem=3) -> startIndex = (3 - 1) * 3 = 6 (Produtos 6, 7, 8)
-        const startIndex = (ordem - 1) * PRODUTOS_POR_LOTE;
+        const totalBatches = Math.ceil(produtos.length / PRODUTOS_POR_LOTE);
+        const savedBatchIndex = parseInt(localStorage.getItem('ultimo_lote_promo') || 0);
+        const currentBatchIndex = savedBatchIndex % totalBatches;
+        const nextBatchIndex = (currentBatchIndex + 1) % totalBatches;
+        localStorage.setItem('ultimo_lote_promo', nextBatchIndex);
 
-        // 5. Pega os 3 produtos para ESTE template
+        const startIndex = currentBatchIndex * PRODUTOS_POR_LOTE;
         const itemsToShow = [
             produtos[startIndex], 
             produtos[startIndex + 1], 
             produtos[startIndex + 2]
-        ].filter(Boolean); // '.filter(Boolean)' remove 'undefined' se o lote for incompleto
+        ].filter(Boolean); // '.filter(Boolean)' remove 'undefined'
 
-        // 6. Verifica se o lote está vazio (ex: ?ordem=20 e só tem 5 produtos)
-        if (itemsToShow.length === 0) {
-            console.warn(`Parâmetro 'ordem=${ordem}' não encontrou produtos. Mostrando o primeiro lote.`);
-            // Fallback: mostra o primeiro lote para não ficar em branco
-            const fallbackItems = [produtos[0], produtos[1], produtos[2]].filter(Boolean);
-            runInternalRotation(fallbackItems);
-        } else {
-            // 7. Inicia a micro-rotação com os produtos corretos
-            runInternalRotation(itemsToShow);
-        }
+        runInternalRotation(itemsToShow);
 
     } catch (error) {
-        console.error("Erro no init():", error);
-        descricaoTexto.textContent = "Erro ao carregar API.";
+        console.error("Erro ao executar o template:", error);
+        descricaoTexto.textContent = "Erro ao exibir dados.";
     }
 }
 
-// Inicia tudo
+// 9. *** NOVA FUNÇÃO: Pré-carregamento de Imagens ***
+function preloadImages(produtosArray) {
+    console.log("Iniciando pré-carregamento de imagens...");
+    produtosArray.forEach(produto => {
+        if (produto.IMAGEM_PRODUTO_URL) {
+            const img = new Image();
+            img.src = produto.IMAGEM_PRODUTO_URL;
+        }
+    });
+}
+
+// Inicia tudo assim que o DOM estiver pronto (mais rápido que 'window.onload')
 document.addEventListener('DOMContentLoaded', init);
