@@ -124,7 +124,7 @@ body {
     z-index: 12; /* Na frente do produto */
 }
 #descricao-texto {
-    font-size: 4.0vh; /* --- MUDANÇA: Texto maior (era 3.2vh) --- */
+    font-size: 4.0vh;
     color: var(--cor-texto-descricao);
     font-weight: bold;
     text-align: left;
@@ -147,26 +147,30 @@ body {
     z-index: 12; /* Na frente do produto */
 }
 .simbolo-real {
-    font-size: 4.0vh; /* --- MUDANÇA: 'R$' maior (era 3.2vh) --- */
+    font-size: 4.0vh;
     margin-right: 8px;
 }
 #preco-texto {
-    font-size: 11vh; /* --- MUDANÇA: Preço maior (era 9vh) --- */
+    font-size: 11vh;
     line-height: 1;
 }
 
 
 /* --- "Caixinha" do QR/Seta --- */
+
+/* 1. A "Caixinha" (Wrapper) */
 #info-inferior-wrapper {
     bottom: 3vh; 
     left: 3vw;
     width: 94vw; 
     height: auto;
-    z-index: 10;
+    z-index: 12; /* --- MUDANÇA: Agora é 12 (na FRENTE do produto) --- */
     
     display: flex;
     align-items: center; 
 }
+
+/* 2. O QR Code (dentro da caixinha) */
 #qrcode-container {
     width: 30vw; 
     height: 30vw; 
@@ -180,71 +184,5 @@ body {
     height: 100%;
     object-fit: contain;
 }
-#qr-texto-container {
-    background-color: var(--cor-seta-qr);
-    padding: 1.5vh 2vh;
-    border-radius: 1vh;
-    position: relative;
-    margin-left: 3vw; 
-    flex-grow: 1; 
-}
-#qr-texto-container::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    left: -2.8vw; 
-    width: 0; 
-    height: 0; 
-    border-top: 1.5vw solid transparent;
-    border-bottom: 1.5vw solid transparent;
-    border-right: 3vw solid var(--cor-seta-qr); 
-}
-#qr-texto {
-    margin: 0;
-    color: white;
-    font-size: 3vw; 
-    font-weight: bold;
-    text-align: center;
-}
-/* --- FIM DAS MUDANÇAS --- */
 
-
-/* --- ANIMAÇÕES (Mesmas de antes) --- */
-.hidden { opacity: 0; }
-.slideInUp { animation: slideInUp 0.8s ease-out forwards; }
-@keyframes slideInUp {
-    from { opacity: 0; transform: translateY(100%); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.slideInRight { animation: slideInRight 0.8s ease-out forwards; }
-@keyframes slideInRight {
-    from { opacity: 0; transform: translateX(100%); }
-    to { opacity: 1; transform: translateX(0); }
-}
-.slideInLeft { animation: slideInLeft 0.8s ease-out forwards; }
-@keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-100%); }
-    to { opacity: 1; transform: translateX(0); }
-}
-.typewriter {
-    opacity: 1;
-    animation: typewriter 1s steps(4) forwards;
-    white-space: nowrap;
-    overflow: hidden;
-    width: 0;
-}
-@keyframes typewriter {
-    from { width: 0; }
-    to { width: 100%; }
-}
-.fadeOut { animation: fadeOut 0.5s ease-in forwards; }
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
-
-/* --- Media Query Horizontal (IGNORAR POR ENQUANTO) --- */
-@media (orientation: landscape) {
-    /* Layout horizontal ainda precisa ser feito */
-}
+/* 3.
