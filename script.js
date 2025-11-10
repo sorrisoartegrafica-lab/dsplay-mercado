@@ -202,8 +202,8 @@ async function fetchFromNetwork() {
 // 8. --- MUDANÇA CRÍTICA: Lógica de Lote (Híbrida) ---
 function runTemplate(data) {
     try {
-        configMercado = data.configMercado;
-        produtos = data.produtos;
+        configMercado = data.response.configMercado;
+        produtos = data.response.produtos;
         
         if (!produtos || produtos.length === 0) {
             console.error("Nenhum produto nos dados.");
@@ -284,3 +284,4 @@ function preloadImages(produtosArray, config) {
 
 // Inicia tudo
 document.addEventListener('DOMContentLoaded', init);
+
