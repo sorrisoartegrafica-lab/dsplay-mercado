@@ -290,10 +290,10 @@ function runTemplate(data) {
 // 9. Pré-carregamento de Imagens
 function preloadImages(produtosArray, config) {
     console.log("Iniciando pré-carregamento de imagens...");
+    const prefixoURL = 'https:'; // Adicionado prefixo aqui
+    
     // Pré-carrega imagens dos produtos (Produto, Selo, QR)
     if (produtosArray) {
-        // ############ MUDANÇA BUBBLE.IO (Mapeamento Final) ############
-        const prefixoURL = 'https:';
         produtosArray.forEach(produto => {
             if (produto.imagem_produto_text) (new Image()).src = prefixoURL + produto.imagem_produto_text;
             if (produto.selo_produto_text) (new Image()).src = prefixoURL + produto.selo_produto_text;
@@ -302,10 +302,14 @@ function preloadImages(produtosArray, config) {
     }
     
     // Pré-carrega imagem da config (Logo)
-    if (config && config.LOGO_MERCADO_URL_text) (new Image()).src = config.LOGO_MERCADO_URL_text;
+    // ############ MUDANÇA BUBBLE.IO (Mapeamento Final - MINÚSCULAS) ############
+    if (config && config.logo_mercado_url_text) { // <-- CORRIGIDO (minúsculas)
+        (new Image()).src = prefixoURL + config.logo_mercado_url_text; // <-- CORRIGIDO (minúsculas)
+    }
     // ############ FIM DA MUDANÇA ############
 }
 
 // Inicia tudo
 document.addEventListener('DOMContentLoaded', init);
+
 
