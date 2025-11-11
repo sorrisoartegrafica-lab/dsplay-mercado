@@ -294,6 +294,7 @@ function preloadImages(produtosArray, config) {
     
     // Pré-carrega imagens dos produtos (Produto, Selo, QR)
     if (produtosArray) {
+        // ############ MUDANÇA BUBBLE.IO (Mapeamento Final - MINÚSCULAS) ############
         produtosArray.forEach(produto => {
             if (produto.imagem_produto_text) (new Image()).src = prefixoURL + produto.imagem_produto_text;
             if (produto.selo_produto_text) (new Image()).src = prefixoURL + produto.selo_produto_text;
@@ -302,7 +303,6 @@ function preloadImages(produtosArray, config) {
     }
     
     // Pré-carrega imagem da config (Logo)
-    // ############ MUDANÇA BUBBLE.IO (Mapeamento Final - MINÚSCULAS) ############
     if (config && config.logo_mercado_url_text) { // <-- CORRIGIDO (minúsculas)
         (new Image()).src = prefixoURL + config.logo_mercado_url_text; // <-- CORRIGIDO (minúsculas)
     }
@@ -311,5 +311,3 @@ function preloadImages(produtosArray, config) {
 
 // Inicia tudo
 document.addEventListener('DOMContentLoaded', init);
-
-
