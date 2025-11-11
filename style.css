@@ -22,7 +22,7 @@ body {
     width: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; 
+    overflow: hidden;
     background-color: #000; 
 }
 #app {
@@ -53,7 +53,7 @@ body {
     height: 20vh; 
     clip-path: ellipse(150% 100% at 50% 100%);
     box-shadow: 0 -1vh 2vh rgba(0,0,0,0.2); 
-    z-index: 2; 
+    z-index: 2;
 }
 
 /* --- ESTILOS DE CONTEÚDO (Novo Layout) --- */
@@ -62,7 +62,7 @@ body {
     position: absolute;
     opacity: 0; 
     box-sizing: border-box;
-    z-index: 12; 
+    z-index: 10; /* Z-index base para elementos */
 }
 
 /* Logo (Canto Superior Direito) */
@@ -74,6 +74,7 @@ body {
     display: flex;
     justify-content: flex-end;
     align-items: flex-start; 
+    z-index: 12; /* <-- CORRIGIDO: Na frente de tudo */
 }
 #logo-img {
     max-width: 100%; 
@@ -87,7 +88,8 @@ body {
     left: 1%;
     width: 70%; 
     height: 40%;
-    z-index: 12; /* Na frente do produto */
+    z-index: 12;
+    /* Na frente do produto */
 }
 #selo-img {
     max-width: 100%;
@@ -121,7 +123,8 @@ body {
     height: 15%;
     display: flex;
     align-items: center;
-    z-index: 12; /* Na frente do produto */
+    z-index: 12; 
+    /* Na frente do produto */
 }
 #descricao-texto {
     font-size: 3.4vh;
@@ -144,7 +147,8 @@ body {
     color: var(--cor-texto-preco);
     font-weight: bolder;
     text-shadow: 0 0.2vh 0.4vh rgba(0,0,0,0.3);
-    z-index: 12; /* Na frente do produto */
+    z-index: 12;
+    /* Na frente do produto */
 }
 .simbolo-real {
     font-size: 3.4vh;
@@ -160,21 +164,23 @@ body {
 
 /* 1. A "Caixinha" (Wrapper) */
 #info-inferior-wrapper {
-    bottom: 3vh; 
+    bottom: 3vh;
     left: 3vw;
     width: auto; /* --- MUDANÇA: Não força mais a largura (era 94vw) --- */
-    max-width: 94vw; /* Limite para não vazar da tela */
+    max-width: 94vw;
+    /* Limite para não vazar da tela */
     height: auto;
-    z-index: 12; /* Na FRENTE do produto */
+    z-index: 12;
+    /* Na FRENTE do produto */
     display: flex;
-    align-items: center; 
+    align-items: center;
 }
 
 /* 2. O QR Code (dentro da caixinha) */
 #qrcode-container {
     width: 30vw; 
     height: 30vw; 
-    background-color: white; 
+    background-color: white;
     padding: 1.5vw; 
     box-sizing: border-box;
     flex-shrink: 0; 
@@ -193,9 +199,10 @@ body {
     position: relative;
     margin-left: 3vw; 
     width: auto; /* --- MUDANÇA: Largura automática --- */
-    flex-shrink: 0; /* --- MUDANÇA: Não encolhe */
+    flex-shrink: 0;
+    /* --- MUDANÇA: Não encolhe */
     /* 'flex-grow: 1' REMOVIDO */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 /* A Seta (feita com CSS) */
 #qr-texto-container::before {
@@ -208,7 +215,7 @@ body {
     height: 0; 
     border-top: 1.5vw solid transparent;
     border-bottom: 1.5vw solid transparent;
-    border-right: 3vw solid var(--cor-seta-qr); 
+    border-right: 3vw solid var(--cor-seta-qr);
 }
 #qr-texto {
     margin: 0;
@@ -216,26 +223,32 @@ body {
     font-size: 3.5vw; 
     font-weight: bold;
     text-align: center;
-    white-space: nowrap; /* --- MUDANÇA: Não quebra a linha --- */
+    white-space: nowrap;
+    /* --- MUDANÇA: Não quebra a linha --- */
 }
 /* --- FIM DAS MUDANÇAS --- */
 
 
 /* --- ANIMAÇÕES (Mesmas de antes) --- */
-.hidden { opacity: 0; }
+.hidden { opacity: 0;
+}
 .slideInUp { animation: slideInUp 0.8s ease-out forwards; }
 @keyframes slideInUp {
-    from { opacity: 0; transform: translateY(100%); }
+    from { opacity: 0; transform: translateY(100%);
+    }
     to { opacity: 1; transform: translateY(0); }
 }
-.slideInRight { animation: slideInRight 0.8s ease-out forwards; }
+.slideInRight { animation: slideInRight 0.8s ease-out forwards;
+}
 @keyframes slideInRight {
     from { opacity: 0; transform: translateX(100%); }
-    to { opacity: 1; transform: translateX(0); }
+    to { opacity: 1;
+    transform: translateX(0); }
 }
 .slideInLeft { animation: slideInLeft 0.8s ease-out forwards; }
 @keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-100%); }
+    from { opacity: 0;
+    transform: translateX(-100%); }
     to { opacity: 1; transform: translateX(0); }
 }
 .typewriter {
@@ -247,11 +260,13 @@ body {
 }
 @keyframes typewriter {
     from { width: 0; }
-    to { width: 100%; }
+    to { width: 100%;
+    }
 }
 .fadeOut { animation: fadeOut 0.5s ease-in forwards; }
 @keyframes fadeOut {
-    from { opacity: 1; }
+    from { opacity: 1;
+    }
     to { opacity: 0; }
 }
 
@@ -259,4 +274,3 @@ body {
 @media (orientation: landscape) {
     /* Layout horizontal ainda precisa ser feito */
 }
-
