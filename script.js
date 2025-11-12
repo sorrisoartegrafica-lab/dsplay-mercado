@@ -1,4 +1,4 @@
-// script.js - Versão HÍBRIDA (Automático + Manual via URL)
+// script.js - Versão com "Crossfade" (resolve "travada")
 
 // ##################################################################
 //  Lendo a API e o Lote (Batch) da URL
@@ -49,13 +49,9 @@ const elementosAnimadosProduto = [
 
 // --- Constantes de Tempo ---
 const DURACAO_TOTAL_SLOT = 15000;
-// 15 segundos
-// ATENÇÃO: Esta lógica agora assume que a API *sempre* retorna 3 produtos
 const DURACAO_POR_PRODUTO = DURACAO_TOTAL_SLOT / 3; // 5000ms (5s) por produto
-
-const ANIMATION_DELAY = 1000;
-// 1 segundo
-const EXIT_ANIMATION_DURATION = 500; // 0.5s
+const ANIMATION_DELAY = 1000; // 1 segundo (tempo da animação de entrada)
+const EXIT_ANIMATION_DURATION = 500; // 0.5s (tempo da animação de saída)
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -63,19 +59,10 @@ function sleep(ms) {
 
 // 1. Função para APLICAR A CONFIGURAÇÃO DO MERCADO (Itens Estáticos)
 function applyConfig(config) {
-    // ############ MUDANÇA BUBBLE.IO (Mapeamento Final - MINÚSCULAS) ############
     document.documentElement.style.setProperty('--cor-fundo-principal', config.cor_fundo_text);
     document.documentElement.style.setProperty('--cor-fundo-secundario', config.cor_2_text);
     document.documentElement.style.setProperty('--cor-texto-descricao', config.cor_texto_1_text);
     document.documentElement.style.setProperty('--cor-texto-preco', config.cor_texto_2_text);
-    
-    // --- MUDANÇA: Salva a cor de fundo no cache (Sua ideia!) ---
-    try {
-        localStorage.setItem('main_bg_color_cache', config.cor_fundo_text);
-    } catch (e) {
-        console.warn("Não foi possível salvar a cor de fundo no cache.", e);
-    }
-    // --- FIM DA MUDANÇA ---
     
     const prefixoURL = 'https:';
     if (config.logo_mercado_url_text) { 
@@ -83,15 +70,12 @@ function applyConfig(config) {
     }
     
     document.documentElement.style.setProperty('--cor-seta-qr', config.qr_cor_seta_text || '#00A300'); 
-    // ############ FIM DA MUDANÇA ############
 
-    // Anima a entrada do logo (o único item estático)
     elementosEstaticosAnimados.forEach(el => el.classList.add('slideInUp'));
 }
 
 // 2. Função para ATUALIZAR o conteúdo do PRODUTO (itens que rotacionam)
 function updateContent(item) {
-    // ############ MUDANÇA BUBBLE.IO (Mapeamento Final) ############
     const prefixoURL = 'https:';
     
     produtoImg.src = prefixoURL + item.imagem_produto_text;
@@ -100,9 +84,7 @@ function updateContent(item) {
     seloImg.src = prefixoURL + item.selo_produto_text;
     qrcodeImg.src = prefixoURL + item.t_qr_produto_text;
     
-    // O texto do QR agora é por produto.
     qrTexto.textContent = item.texto_qr_text; 
-    // ############ FIM DA MUDANÇA ############
 
     // Prepara a animação de máquina de escrever
     const precoElement = document.getElementById('preco-texto');
@@ -116,58 +98,80 @@ function updateContent(item) {
     precoContainer.style.animation = `typewriter ${duration}s steps(${steps}) forwards`;
 }
 
-// 3. Sincronia da Animação de ENTRADA
+// 3. --- MUDANÇA: Animação de ENTRADA Suave (Crossfade) ---
+// (Esta função agora será chamada SIMULTANEAMENTE com a de saída)
 async function playEntranceAnimation() {
-    // Limpa classes de saída
+    // 1. Reseta todas as classes
     elementosAnimadosProduto.forEach(el => {
-        el.className = 'elemento-animado'; // Reseta todas as classes
+        el.className = 'elemento-animado';
     });
-
-    // Adiciona classes de entrada
+    
+    // 2. Adiciona classes de ENTRADA
     produtoContainer.classList.add('slideInRight');
     seloContainer.classList.add('slideInLeft');
     descricaoContainer.classList.add('slideInLeft');
     infoInferiorWrapper.classList.add('slideInUp');
     precoContainer.classList.add('typewriter'); 
     
-    await sleep(ANIMATION_DELAY);
+    // 3. Espera a animação de entrada terminar
+    await sleep(ANIMATION_DELAY); 
 }
 
-// 4. --- MUDANÇA CRÍTICA: Animação de SAÍDA Suave (resolve "travada") ---
+// 4. --- MUDANÇA: Animação de SAÍDA Suave (Crossfade) ---
+// (Esta função será chamada SIMULTANEAMENTE com a de entrada)
 async function playExitAnimation() {
-    // Remove classes de entrada
-    elementosAnimadosProduto.forEach(el => {
-        el.className = 'elemento-animado'; // Reseta todas as classes
-    });
-
-    // Adiciona classes de SAÍDA
+    // 1. ACHA todos os elementos que JÁ ESTÃO na tela (com classes de entrada)
+    //    Isso é complexo, então vamos simplificar e APENAS adicionar as classes de saída.
+    //    O reset será feito pela 'playEntranceAnimation'.
+    
     produtoContainer.classList.add('slideOutRight'); // Sai para a direita
     seloContainer.classList.add('slideOutLeft'); // Sai para a esquerda
     descricaoContainer.classList.add('slideOutLeft'); // Sai para a esquerda
     precoContainer.classList.add('slideOutDown'); // Sai para baixo
     infoInferiorWrapper.classList.add('slideOutDown'); // Sai para baixo
 
-    await sleep(EXIT_ANIMATION_DURATION);
+    // 2. Não espera. Deixa a animação de saída tocar (0.5s)
+    //    enquanto a de entrada (1.0s) já começou.
     
-    // Esconde os elementos após a animação
-    elementosAnimadosProduto.forEach(el => el.classList.add('hidden'));
+    // await sleep(EXIT_ANIMATION_DURATION); // 'await' REMOVIDO
 }
 // --- FIM DA MUDANÇA ---
 
-// 5. Roda a "Micro-Rotação" (os 3 produtos)
+
+// 5. --- MUDANÇA: Roda a "Micro-Rotação" (com Crossfade) ---
 function runInternalRotation(items) {
-    async function showNextProduct(subIndex) {
-        const item = items[subIndex % items.length];
-        if (subIndex > 0) {
-            await playExitAnimation();
-        }
+    
+    let currentIndex = 0;
+
+    function showNextProduct() {
+        const item = items[currentIndex % items.length];
+        
+        // 1. Atualiza o conteúdo (enquanto está invisível/fora da tela)
         updateContent(item);
-        await playEntranceAnimation();
+        
+        // 2. Toca a animação de ENTRADA
+        playEntranceAnimation();
+        
+        // 3. Toca a animação de SAÍDA (dos elementos antigos)
+        //    (Isso só não acontece na primeira vez)
+        if (currentIndex > 0) {
+            playExitAnimation(); // Toca a saída AO MESMO TEMPO
+        }
+
+        // 4. Prepara o próximo item
+        currentIndex++;
     }
+
+    // 1. Mostra o primeiro item (só animação de ENTRADA)
     showNextProduct(0);
+    
+    // 2. Agenda o segundo item (ENFIM, o "Crossfade")
     setTimeout(() => showNextProduct(1), DURACAO_POR_PRODUTO);
+    
+    // 3. Agenda o terceiro item
     setTimeout(() => showNextProduct(2), DURACAO_POR_PRODUTO * 2);
 }
+// --- FIM DA MUDANÇA ---
 
 
 // 6. FUNÇÃO DE INICIALIZAÇÃO (Lógica de Cache)
