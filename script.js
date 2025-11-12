@@ -1,5 +1,4 @@
-// script.js - ATUALIZADO PARA API INTELIGENTE (video_mercado)
-// Mapeando os nomes exatos do JSON do Bubble.io
+// script.js - Versão HÍBRIDA (Automático + Manual via URL)
 
 // ##################################################################
 //  Lendo a API e o Lote (Batch) da URL
@@ -11,7 +10,6 @@ const loteManual = queryParams.get('videos'); // O grupo de vídeo (ex: 1, 2, 3.
 
 
 // --- Chave para o Cache ---
-// O cache agora depende do lote, para não misturar os vídeos
 const CACHE_KEY = `supermercado_api_cache_${API_URL_BASE}_lote_${loteManual || 'auto'}`;
 // --- Configuração dos Dados (AGORA VAZIOS, VIRÃO DA API OU CACHE) ---
 let configMercado = {};
@@ -35,9 +33,10 @@ const precoTexto = document.getElementById('preco-texto');
 const seloImg = document.getElementById('selo-img');
 const qrcodeImg = document.getElementById('qrcode-img');
 const qrTexto = document.getElementById('qr-texto');
+
+
 // Itens Estáticos (Só animam 1 vez)
-const elementosEstaticosAnimados = [logoContainer];
-// SÓ O LOGO
+const elementosEstaticosAnimados = [logoContainer]; // SÓ O LOGO
 // Itens Rotativos (Animam a cada 5s)
 const elementosAnimadosProduto = [
     produtoContainer, 
@@ -46,8 +45,9 @@ const elementosAnimadosProduto = [
     seloContainer, 
     infoInferiorWrapper // A "CAIXINHA" inteira
 ];
+
+
 // --- Constantes de Tempo ---
-// const PRODUTOS_POR_LOTE = 3; // Não é mais necessário, a API define isso
 const DURACAO_TOTAL_SLOT = 15000;
 // 15 segundos
 // ATENÇÃO: Esta lógica agora assume que a API *sempre* retorna 3 produtos
@@ -64,19 +64,25 @@ function sleep(ms) {
 // 1. Função para APLICAR A CONFIGURAÇÃO DO MERCADO (Itens Estáticos)
 function applyConfig(config) {
     // ############ MUDANÇA BUBBLE.IO (Mapeamento Final - MINÚSCULAS) ############
-    // Mapeando os nomes do seu DB (ex: "cor_fundo_text") para os nomes que o CSS espera.
     document.documentElement.style.setProperty('--cor-fundo-principal', config.cor_fundo_text);
     document.documentElement.style.setProperty('--cor-fundo-secundario', config.cor_2_text);
     document.documentElement.style.setProperty('--cor-texto-descricao', config.cor_texto_1_text);
     document.documentElement.style.setProperty('--cor-texto-preco', config.cor_texto_2_text);
     
-    // CORREÇÃO: Usando os nomes em MINÚSCULAS que a API envia.
+    // --- MUDANÇA: Salva a cor de fundo no cache (Sua ideia!) ---
+    try {
+        localStorage.setItem('main_bg_color_cache', config.cor_fundo_text);
+    } catch (e) {
+        console.warn("Não foi possível salvar a cor de fundo no cache.", e);
+    }
+    // --- FIM DA MUDANÇA ---
+    
     const prefixoURL = 'https:';
-    if (config.logo_mercado_url_text) { // <-- CORRIGIDO (minúsculas)
-        logoImg.src = prefixoURL + config.logo_mercado_url_text; // <-- CORRIGIDO (minúsculas)
+    if (config.logo_mercado_url_text) { 
+        logoImg.src = prefixoURL + config.logo_mercado_url_text; 
     }
     
-    document.documentElement.style.setProperty('--cor-seta-qr', config.qr_cor_seta_text || '#00A300'); // <-- CORRIGIDO (minúsculas)
+    document.documentElement.style.setProperty('--cor-seta-qr', config.qr_cor_seta_text || '#00A300'); 
     // ############ FIM DA MUDANÇA ############
 
     // Anima a entrada do logo (o único item estático)
@@ -86,8 +92,6 @@ function applyConfig(config) {
 // 2. Função para ATUALIZAR o conteúdo do PRODUTO (itens que rotacionam)
 function updateContent(item) {
     // ############ MUDANÇA BUBBLE.IO (Mapeamento Final) ############
-    // Mapeando os nomes dos campos do seu 'produto'
-    // O JSON do Bubble adiciona "http:" ou "https:" automaticamente se começar com //
     const prefixoURL = 'https:';
     
     produtoImg.src = prefixoURL + item.imagem_produto_text;
@@ -96,7 +100,7 @@ function updateContent(item) {
     seloImg.src = prefixoURL + item.selo_produto_text;
     qrcodeImg.src = prefixoURL + item.t_qr_produto_text;
     
-    // LÓGICA MOVIDA: O texto do QR agora é por produto.
+    // O texto do QR agora é por produto.
     qrTexto.textContent = item.texto_qr_text; 
     // ############ FIM DA MUDANÇA ############
 
@@ -106,46 +110,53 @@ function updateContent(item) {
     void precoContainer.offsetWidth;
     precoContainer.style.animation = 'none'; 
     
-    // ############ MUDANÇA BUBBLE.IO ############
-    // Lendo o 'valor_text' para animar
     const steps = (item.valor_text && item.valor_text.length > 0) ? item.valor_text.length : 1;
-    // ############ FIM DA MUDANÇA ############
-    
     const duration = (steps * 0.15 < 1) ? steps * 0.15 : 1;
-    // Máx de 1s
     
     precoContainer.style.animation = `typewriter ${duration}s steps(${steps}) forwards`;
 }
 
 // 3. Sincronia da Animação de ENTRADA
 async function playEntranceAnimation() {
-    elementosAnimadosProduto.forEach(el => el.classList.remove('fadeOut'));
-    
+    // Limpa classes de saída
+    elementosAnimadosProduto.forEach(el => {
+        el.className = 'elemento-animado'; // Reseta todas as classes
+    });
+
+    // Adiciona classes de entrada
     produtoContainer.classList.add('slideInRight');
     seloContainer.classList.add('slideInLeft');
     descricaoContainer.classList.add('slideInLeft');
     infoInferiorWrapper.classList.add('slideInUp');
-    // A "Caixinha" inteira
-    precoContainer.classList.add('typewriter'); // Preço entra JUNTO
+    precoContainer.classList.add('typewriter'); 
     
     await sleep(ANIMATION_DELAY);
 }
 
-// 4. Função para EXECUTAR a animação de SAÍDA do PRODUTO
+// 4. --- MUDANÇA CRÍTICA: Animação de SAÍDA Suave (resolve "travada") ---
 async function playExitAnimation() {
+    // Remove classes de entrada
     elementosAnimadosProduto.forEach(el => {
-        el.className = 'elemento-animado';
-        el.classList.add('fadeOut');
+        el.className = 'elemento-animado'; // Reseta todas as classes
     });
+
+    // Adiciona classes de SAÍDA
+    produtoContainer.classList.add('slideOutRight'); // Sai para a direita
+    seloContainer.classList.add('slideOutLeft'); // Sai para a esquerda
+    descricaoContainer.classList.add('slideOutLeft'); // Sai para a esquerda
+    precoContainer.classList.add('slideOutDown'); // Sai para baixo
+    infoInferiorWrapper.classList.add('slideOutDown'); // Sai para baixo
+
     await sleep(EXIT_ANIMATION_DURATION);
+    
+    // Esconde os elementos após a animação
     elementosAnimadosProduto.forEach(el => el.classList.add('hidden'));
 }
+// --- FIM DA MUDANÇA ---
 
 // 5. Roda a "Micro-Rotação" (os 3 produtos)
 function runInternalRotation(items) {
     async function showNextProduct(subIndex) {
-        // A lógica de fatiamento foi removida.
-        // A API agora entrega *exatamente* os 3 itens (ou menos) que queremos.
         const item = items[subIndex % items.length];
         if (subIndex > 0) {
             await playExitAnimation();
@@ -168,14 +179,9 @@ async function init() {
         return;
     }
 
-    // ############ MUDANÇA BUBBLE.IO (Lógica Inteligente) ############
-    // O parâmetro 'videos' é OBRIGATÓRIO para esta lógica funcionar
     if (!loteManual) {
-        console.warn("Aviso: Parâmetro 'videos' (ex: &videos=1) não encontrado na URL. O script antigo pode estar em cache ou a URL está incompleta.");
-        // Não vamos parar o script, mas vamos avisar.
-        // Tentaremos chamar a API mesmo assim, o que provavelmente resultará em um erro 400 (Bad Request).
+        console.warn("Aviso: Parâmetro 'videos' (ex: &videos=1) não encontrado na URL.");
     }
-    // ############ FIM DA MUDANÇA ############
     
     let cachedData = null;
     try {
@@ -212,12 +218,8 @@ async function init() {
 // 7. Busca dados da rede e salva no cache
 async function fetchFromNetwork() {
     try {
-        // ############ MUDANÇA BUBBLE.IO (Lógica Inteligente) ############
-        // Anexa o parâmetro &videos=X (lido de loteManual) à URL da API
-        // Se loteManual for nulo, ele enviará '...&videos=null', o que causará o erro 400.
         const finalApiUrl = `${API_URL_BASE}&videos=${loteManual}`;
         console.log("Buscando dados da API: ", finalApiUrl);
-        // ############ FIM DA MUDANÇA ############
 
         const response = await fetch(finalApiUrl); // Chama a URL final
         if (!response.ok) throw new Error('Resposta da rede não foi OK');
@@ -237,13 +239,11 @@ async function fetchFromNetwork() {
     }
 }
 
-// 8. --- MUDANÇA CRÍTICA: Lógica de Lote (Híbrida) ---
+// 8. Lógica de Lote (Híbrida)
 function runTemplate(data) {
     try {
-        // ############ MUDANÇA BUBBLE.IO (lendo de data.response) ############
         configMercado = data.response.configMercado;
         produtos = data.response.produtos;
-        // ############ FIM DA MUDANÇA ############
         
         if (!configMercado || !produtos || produtos.length === 0) {
              if (!configMercado) console.error("configMercado está nulo ou indefinido.");
@@ -256,11 +256,7 @@ function runTemplate(data) {
         applyConfig(configMercado);
         if (produtos && produtos.length > 0) {
             
-            // ############ MUDANÇA BUBBLE.IO (Lógica Inteligente) ############
-            // A lógica de "fatiamento" (slice) foi REMOVIDA.
-            // A API já entrega os 3 produtos corretos (ou menos).
             const itemsToShow = produtos.filter(Boolean);
-            // ############ FIM DA MUDANÇA ############
 
             // Inicia a rotação dos itens dinâmicos
             runInternalRotation(itemsToShow);
@@ -285,7 +281,6 @@ function preloadImages(produtosArray, config) {
     
     // Pré-carrega imagens dos produtos (Produto, Selo, QR)
     if (produtosArray) {
-        // ############ MUDANÇA BUBBLE.IO (Mapeamento Final - MINÚSCULAS) ############
         produtosArray.forEach(produto => {
             if (produto.imagem_produto_text) (new Image()).src = prefixoURL + produto.imagem_produto_text;
             if (produto.selo_produto_text) (new Image()).src = prefixoURL + produto.selo_produto_text;
@@ -294,10 +289,9 @@ function preloadImages(produtosArray, config) {
     }
     
     // Pré-carrega imagem da config (Logo)
-    if (config && config.logo_mercado_url_text) { // <-- CORRIGIDO (minúsculas)
-        (new Image()).src = prefixoURL + config.logo_mercado_url_text; // <-- CORRIGIDO (minúsculas)
+    if (config && config.logo_mercado_url_text) { 
+        (new Image()).src = prefixoURL + config.logo_mercado_url_text; 
     }
-    // ############ FIM DA MUDANÇA ############
 }
 
 // Inicia tudo
