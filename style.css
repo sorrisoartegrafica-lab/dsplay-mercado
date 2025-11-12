@@ -1,7 +1,4 @@
-/* style.css - Layout Final (com Fonte Oswald e Pesos) */
-
-/* --- MUDANÇA: Importa os pesos 300, 400, 600 e 700 --- */
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&display=swap');
+/* style.css - Layout Final */
 
 :root {
     /* Variáveis CSS para as cores dinâmicas (serão preenchidas pelo JS) */
@@ -25,11 +22,8 @@ body {
     width: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; 
-    
-    /* --- MUDANÇA: Define Oswald como a fonte principal com peso Regular (400) --- */
-    font-family: 'Oswald', sans-serif;
-    font-weight: 400; /* Padrão Regular */
+    overflow: hidden;
+    /* background-color: #000; (Movido para o HTML) */
 }
 #app {
     position: fixed;
@@ -59,7 +53,7 @@ body {
     height: 20vh; 
     clip-path: ellipse(150% 100% at 50% 100%);
     box-shadow: 0 -1vh 2vh rgba(0,0,0,0.2); 
-    z-index: 2; 
+    z-index: 2;
 }
 
 /* --- ESTILOS DE CONTEÚDO (Novo Layout) --- */
@@ -68,7 +62,7 @@ body {
     position: absolute;
     opacity: 0; 
     box-sizing: border-box;
-    z-index: 10; 
+    z-index: 10; /* Z-index base para elementos */
 }
 
 /* Logo (Canto Superior Direito) */
@@ -80,6 +74,7 @@ body {
     display: flex;
     justify-content: flex-end;
     align-items: flex-start; 
+    z-index: 12; /* Na frente de tudo */
 }
 #logo-img {
     max-width: 100%; 
@@ -93,7 +88,8 @@ body {
     left: 1%;
     width: 70%; 
     height: 40%;
-    z-index: 12; /* Na frente do produto */
+    z-index: 12;
+    /* Na frente do produto */
 }
 #selo-img {
     max-width: 100%;
@@ -127,12 +123,13 @@ body {
     height: 15%;
     display: flex;
     align-items: center;
-    z-index: 12; /* Na frente do produto */
+    z-index: 12; 
+    /* Na frente do produto */
 }
 #descricao-texto {
     font-size: 3.4vh;
     color: var(--cor-texto-descricao);
-    font-weight: 400; /* --- MUDANÇA: Regular 400 (como pedido) --- */
+    font-weight: bold;
     text-align: left;
     margin: 0;
     line-height: 1.2;
@@ -148,41 +145,36 @@ body {
     display: flex;
     align-items: baseline; 
     color: var(--cor-texto-preco);
-    font-weight: 600; /* --- MUDANÇA: SemiBold 600 (como pedido) --- */
+    font-weight: bolder;
     text-shadow: 0 0.2vh 0.4vh rgba(0,0,0,0.3);
-    z-index: 12; /* Na frente do produto */
+    z-index: 12;
+    /* Na frente do produto */
 }
 .simbolo-real {
     font-size: 3.4vh;
     margin-right: 8px;
-    /* O font-weight: 600 é herdado do #preco-container */
 }
 #preco-texto {
     font-size: 10vh;
     line-height: 1;
-    /* O font-weight: 600 é herdado do #preco-container */
 }
 
 
 /* --- "Caixinha" do QR/Seta --- */
-
-/* 1. A "Caixinha" (Wrapper) */
 #info-inferior-wrapper {
-    bottom: 3vh; 
+    bottom: 3vh;
     left: 3vw;
     width: auto; 
     max-width: 94vw;
     height: auto;
-    z-index: 12; /* Na FRENTE do produto */
+    z-index: 12;
     display: flex;
-    align-items: center; 
+    align-items: center;
 }
-
-/* 2. O QR Code (dentro da caixinha) */
 #qrcode-container {
     width: 30vw; 
     height: 30vw; 
-    background-color: white; 
+    background-color: white;
     padding: 1.5vw; 
     box-sizing: border-box;
     flex-shrink: 0; 
@@ -192,8 +184,6 @@ body {
     height: 100%;
     object-fit: contain;
 }
-
-/* 3. A Caixa da Seta (dentro da caixinha) */
 #qr-texto-container {
     background-color: var(--cor-seta-qr);
     padding: 1.5vh 2vh;
@@ -201,10 +191,9 @@ body {
     position: relative;
     margin-left: 3vw; 
     width: auto; 
-    flex-shrink: 0; 
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+    flex-shrink: 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
-/* A Seta (feita com CSS) */
 #qr-texto-container::before {
     content: "";
     position: absolute;
@@ -215,46 +204,43 @@ body {
     height: 0; 
     border-top: 1.5vw solid transparent;
     border-bottom: 1.5vw solid transparent;
-    border-right: 3vw solid var(--cor-seta-qr); 
+    border-right: 3vw solid var(--cor-seta-qr);
 }
 #qr-texto {
     margin: 0;
     color: white;
     font-size: 3.5vw; 
-    font-weight: 300; /* --- MUDANÇA: Light 300 (como pedido) --- */
+    font-weight: bold;
     text-align: center;
-    white-space: nowrap; 
+    white-space: nowrap;
 }
 
 
-/* --- ANIMAÇÕES (Mesmas de antes) --- */
-.hidden { opacity: 0; }
+/* --- ANIMAÇÕES DE ENTRADA --- */
+.hidden { opacity: 0;
+}
 .slideInUp { animation: slideInUp 0.8s ease-out forwards; }
 @keyframes slideInUp {
-    from { opacity: 0; transform: translateY(100%); }
+    from { opacity: 0; transform: translateY(100%);
+    }
     to { opacity: 1; transform: translateY(0); }
 }
-.slideInRight { animation: slideInRight 0.8s ease-out forwards; }
+.slideInRight { animation: slideInRight 0.8s ease-out forwards;
+}
 @keyframes slideInRight {
     from { opacity: 0; transform: translateX(100%); }
-    to { opacity: 1; transform: translateX(0); }
+    to { opacity: 1;
+    transform: translateX(0); }
 }
 .slideInLeft { animation: slideInLeft 0.8s ease-out forwards; }
 @keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-100%); }
+    from { opacity: 0;
+    transform: translateX(-100%); }
     to { opacity: 1; transform: translateX(0); }
 }
-.typewriter {
-    opacity: 1;
-    animation: typewriter 1s steps(4) forwards;
-    white-space: nowrap;
-    overflow: hidden;
-    width: 0;
-}
-@keyframes typewriter {
-    from { width: 0; }
-    to { width: 100%; }
-}
+
+/* --- MUDANÇA: ANIMAÇÃO 'TYPEWRITER' REMOVIDA --- */
+
 
 /* --- ANIMAÇÕES DE SAÍDA --- */
 .slideOutLeft { animation: slideOutLeft 0.5s ease-in forwards; }
@@ -262,22 +248,20 @@ body {
     from { opacity: 1; transform: translateX(0); }
     to { opacity: 0; transform: translateX(-100%); }
 }
-
 .slideOutRight { animation: slideOutRight 0.5s ease-in forwards; }
 @keyframes slideOutRight {
     from { opacity: 1; transform: translateX(0); }
     to { opacity: 0; transform: translateX(100%); }
 }
-
 .slideOutDown { animation: slideOutDown 0.5s ease-in forwards; }
 @keyframes slideOutDown {
     from { opacity: 1; transform: translateY(0); }
     to { opacity: 0; transform: translateY(100%); }
 }
-
 .fadeOut { animation: fadeOut 0.5s ease-in forwards; }
 @keyframes fadeOut {
-    from { opacity: 1; }
+    from { opacity: 1;
+    }
     to { opacity: 0; }
 }
 
