@@ -3,47 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Promoção Supermercado - Layout Final</title>
+    <title>Mídia Indoor - Vertical</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body style="background-color: #000;">
+<body>
     
     <div id="app">
+        <!-- Fundos -->
         <div id="fundo-principal"></div>
         <div id="fundo-secundario"></div>
 
+        <!-- Logo -->
         <div id="logo-container" class="elemento-animado">
-            <img id="logo-img" src="" alt="Logo do Mercado">
+            <img id="logo-img" src="" alt="Logo">
         </div>
 
-        <div id="selo-container" class="elemento-animado">
-            <img id="selo-img" src="" alt="Selo da Promoção">
-        </div>
-
+        <!-- Produto (Com Efeito Ghost) -->
         <div id="produto-container" class="elemento-animado">
-            <img id="produto-img" src="" alt="Imagem do Produto">
+            <img id="produto-img-ghost" src="" alt="">
+            <img id="produto-img" src="" alt="Produto">
         </div>
 
+        <!-- Selo -->
+        <div id="selo-container" class="elemento-animado">
+            <img id="selo-img" src="" alt="Selo">
+        </div>
+
+        <!-- Descrição -->
         <div id="descricao-container" class="elemento-animado">
-            <p id="descricao-texto"></p>
+            <p id="descricao-texto">Carregando...</p>
         </div>
 
+        <!-- Preço -->
         <div id="preco-container" class="elemento-animado">
             <span class="simbolo-real">R$</span>
             <span id="preco-texto"></span>
         </div>
 
+        <!-- Rodapé -->
         <div id="info-inferior-wrapper" class="elemento-animado">
+            <div id="qr-texto-container">
+                <p id="qr-texto">Aproveite essa oferta</p>
+            </div>
             <div id="qrcode-container">
                 <img id="qrcode-img" src="" alt="QR Code">
             </div>
-
-            <div id="qr-texto-container">
-                <p id="qr-texto"></p>
-            </div>
         </div>
-
-
     </div>
 
     <script src="script.js"></script> 
