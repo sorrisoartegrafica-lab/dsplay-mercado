@@ -108,8 +108,9 @@ function applyConfig(configC, configT) {
     }
     
     // Animações de entrada (PROTEGIDAS)
+    // AQUI ESTAVA O ERRO: Verificamos se o elemento existe antes de adicionar a classe
     if(logoContainer) logoContainer.classList.add('fadeIn');
-    if(footerContainer) footerContainer.classList.add('fadeIn'); // O erro estava aqui!
+    if(footerContainer) footerContainer.classList.add('fadeIn'); 
 }
 
 // --- ATUALIZA CONTEÚDO ---
@@ -138,12 +139,16 @@ function updateContent(item) {
 
 // --- ANIMAÇÕES (Protegidas) ---
 async function playEntrance() {
+    // Proteção: só tenta remover classes se o elemento existir
     elementosRotativos.forEach(el => { if(el) el.className = 'elemento-animado'; });
     
     if(seloContainer) seloContainer.classList.add('slideInDown');
     if(produtoContainer) produtoContainer.classList.add('slideInUp');
+    
+    // Proteção nos timeouts também
     setTimeout(() => { if(descricaoContainer) descricaoContainer.classList.add('slideInLeft'); }, 200);
     setTimeout(() => { if(precoContainer) precoContainer.classList.add('popIn'); }, 400);
+    
     if(qrcodeContainer) qrcodeContainer.classList.add('slideInUp');
     
     await sleep(TEMPO_TRANSICAO);
@@ -210,7 +215,7 @@ async function fetchData() {
 
 function runApp(data) {
     if (!data || !data.response) {
-        console.error("Dados inválidos:", data);
+        console.error("Dados inválidos recebidos:", data);
         return;
     }
     configCliente = data.response.configCliente;
