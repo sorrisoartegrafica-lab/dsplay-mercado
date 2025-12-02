@@ -1,17 +1,12 @@
-// script.js - Versão Vertical Final (Corrigida e Robusta)
+// script.js - Versão Vertical Final (Corrigida: Proteção contra elementos nulos)
 
-// [CONFIG] ID Padrão para testes
-const DEFAULT_VIDEO_ID = "1763501352257x910439018930896900"; 
-// URL CORRETA do seu domínio
+const DEFAULT_VIDEO_ID = "1764628151406x909721458907021300"; 
 const API_URL_BASE = "https://bluemidia.digital/version-test/api/1.1/wf/get_video_data";
 
 // --- URL & API ---
 const queryParams = new URLSearchParams(window.location.search);
 let video_id = queryParams.get('video_id');
-if (!video_id) {
-    console.log("Usando ID padrão de teste.");
-    video_id = DEFAULT_VIDEO_ID;
-}
+if (!video_id) video_id = DEFAULT_VIDEO_ID;
 
 const API_URL_FINAL = `${API_URL_BASE}?video_id=${video_id}`;
 const CACHE_KEY = `hortifruti_vert_${video_id}`;
@@ -19,7 +14,7 @@ const CACHE_KEY = `hortifruti_vert_${video_id}`;
 // Variáveis Globais
 let configCliente = {}, configTemplate = {}, produtos = [];
 
-// Elementos DOM
+// Elementos DOM (Pode ser que alguns não existam no HTML, isso é normal)
 const logoImg = document.getElementById('logo-img');
 const logoContainer = document.getElementById('logo-container');
 const produtoImg = document.getElementById('produto-img');
@@ -65,7 +60,6 @@ function preloadSingleImage(url) {
 
 async function preloadImagesForSlide(item) {
     const promises = [];
-    // Mapeamento robusto de imagens
     const imgProd = item.Imagem_produto || item.imagem_produto || item.imagem_produto_text;
     if (imgProd) promises.push(preloadSingleImage(imgProd));
     
@@ -78,14 +72,12 @@ async function preloadImagesForSlide(item) {
     await Promise.all(promises);
 }
 
-// --- APLICAÇÃO DE CORES (API -> CSS) ---
+// --- APLICAÇÃO DE CORES ---
 function applyConfig(configC, configT) {
     const r = document.documentElement;
     
-    // Debug para ver se as cores chegaram
     console.log("Aplicando Cores:", configT);
 
-    // Mapeamento de Cores (Tenta com e sem _text)
     const c01 = configT.cor_01 || configT.cor_01_text;
     if(c01) {
         r.style.setProperty('--cor-fundo-principal', c01);
@@ -101,7 +93,6 @@ function applyConfig(configC, configT) {
         r.style.setProperty('--cor-seta-qr', c02);
     }
 
-    // Mapeamento de Textos (Cores)
     const corTxt1 = configT.cor_texto_01 || configT.cor_texto_1 || configT.cor_texto_01_text;
     if(corTxt1) r.style.setProperty('--cor-texto-placa', corTxt1);
     
@@ -111,67 +102,61 @@ function applyConfig(configC, configT) {
         r.style.setProperty('--cor-texto-footer', corTxt2);
     }
 
-    // Logo do Cliente
-    const logoUrl = configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text;
-    if (logoUrl) {
-        logoImg.src = formatURL(logoUrl);
+    // Logo (Protegido)
+    if (configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text) {
+        if(logoImg) logoImg.src = formatURL(configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text);
     }
     
-    logoContainer.classList.add('fadeIn');
-    footerContainer.classList.add('fadeIn');
+    // Animações de entrada (PROTEGIDAS)
+    if(logoContainer) logoContainer.classList.add('fadeIn');
+    if(footerContainer) footerContainer.classList.add('fadeIn'); // O erro estava aqui!
 }
 
 // --- ATUALIZA CONTEÚDO ---
 function updateContent(item) {
-    console.log("Exibindo item:", item); // Debug
-
-    // Imagem
     const imgUrl = formatURL(item.Imagem_produto || item.imagem_produto || item.imagem_produto_text);
-    produtoImg.src = imgUrl;
+    if(produtoImg) produtoImg.src = imgUrl;
     if(produtoImgGhost) produtoImgGhost.src = imgUrl;
 
-    // Texto
-    descricaoTexto.textContent = item.nome || item.nome_text;
-    precoTexto.textContent = item.valor || item.valor_text;
+    if(descricaoTexto) descricaoTexto.textContent = item.nome || item.nome_text;
+    if(precoTexto) precoTexto.textContent = item.valor || item.valor_text;
     
-    // QR Code
     const qrUrl = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
-    if(qrUrl) qrcodeImg.src = formatURL(qrUrl);
+    if(qrcodeImg && qrUrl) qrcodeImg.src = formatURL(qrUrl);
     
     const txtQR = item.Texto_QR || item.texto_qr || item.texto_qr_text;
     if(qrTexto) qrTexto.textContent = txtQR || "Aproveite as ofertas";
 
-    // Selo
     const seloUrl = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
-    if(seloUrl){
+    if(seloImg && seloUrl){
         seloImg.src = formatURL(seloUrl);
-        seloContainer.style.display = 'flex';
-    } else {
-        seloContainer.style.display = 'flex'; // Mantém layout
+        if(seloContainer) seloContainer.style.display = 'flex';
+    } else if(seloContainer) {
+        seloContainer.style.display = 'flex'; 
     }
 }
 
-// --- ANIMAÇÕES ---
+// --- ANIMAÇÕES (Protegidas) ---
 async function playEntrance() {
-    elementosRotativos.forEach(el => el.className = 'elemento-animado');
+    elementosRotativos.forEach(el => { if(el) el.className = 'elemento-animado'; });
     
-    seloContainer.classList.add('slideInDown');
-    produtoContainer.classList.add('slideInUp');
-    setTimeout(() => { descricaoContainer.classList.add('slideInLeft'); }, 200);
-    setTimeout(() => { precoContainer.classList.add('popIn'); }, 400);
-    qrcodeContainer.classList.add('slideInUp');
+    if(seloContainer) seloContainer.classList.add('slideInDown');
+    if(produtoContainer) produtoContainer.classList.add('slideInUp');
+    setTimeout(() => { if(descricaoContainer) descricaoContainer.classList.add('slideInLeft'); }, 200);
+    setTimeout(() => { if(precoContainer) precoContainer.classList.add('popIn'); }, 400);
+    if(qrcodeContainer) qrcodeContainer.classList.add('slideInUp');
     
     await sleep(TEMPO_TRANSICAO);
 }
 
 async function playExit() {
-    elementosRotativos.forEach(el => el.className = 'elemento-animado');
+    elementosRotativos.forEach(el => { if(el) el.className = 'elemento-animado'; });
     
-    produtoContainer.classList.add('slideOutDown');
-    descricaoContainer.classList.add('slideOutDown');
-    precoContainer.classList.add('slideOutDown');
-    seloContainer.classList.add('slideOutDown'); 
-    qrcodeContainer.classList.add('slideOutDown');
+    if(produtoContainer) produtoContainer.classList.add('slideOutDown');
+    if(descricaoContainer) descricaoContainer.classList.add('slideOutDown');
+    if(precoContainer) precoContainer.classList.add('slideOutDown');
+    if(seloContainer) seloContainer.classList.add('slideOutDown'); 
+    if(qrcodeContainer) qrcodeContainer.classList.add('slideOutDown');
     
     await sleep(500);
 }
@@ -195,7 +180,6 @@ async function init() {
     let data = null;
     try {
         console.log("Iniciando Vertical. Buscando:", API_URL_FINAL);
-        
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
             data = JSON.parse(cached);
@@ -226,7 +210,7 @@ async function fetchData() {
 
 function runApp(data) {
     if (!data || !data.response) {
-        console.error("Dados inválidos recebidos:", data);
+        console.error("Dados inválidos:", data);
         return;
     }
     configCliente = data.response.configCliente;
@@ -234,16 +218,13 @@ function runApp(data) {
     produtos = data.response.produtos;
 
     if(produtos) {
-        // Filtro robusto: aceita 'nome' OU 'nome_text'
         const validos = produtos.filter(p => p && (p.nome || p.nome_text));
-        
         console.log("Produtos válidos:", validos);
-
         if(validos.length > 0) {
             applyConfig(configCliente, configTemplate);
             startRotation(validos);
         } else {
-            console.warn("Nenhum produto válido encontrado. Verifique os nomes dos campos no banco.");
+            console.warn("Nenhum produto válido encontrado.");
         }
     }
 }
