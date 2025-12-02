@@ -1,6 +1,6 @@
-// script.js - Vertical Final (Corrigido e Sincronizado com Horizontal)
+// script.js - Vertical Final (Corrigido: Cor do QR e Robustez de Campos)
 
-const DEFAULT_VIDEO_ID = "1764628151406x909721458907021300"; 
+const DEFAULT_VIDEO_ID = "1764679761977x345953800145338400"; // Atualizado com ID do seu exemplo
 const API_URL_BASE = "https://bluemidia.digital/version-test/api/1.1/wf/get_video_data";
 
 // --- URL & API ---
@@ -26,7 +26,7 @@ const precoTexto = document.getElementById('preco-texto');
 const precoContainer = document.getElementById('preco-container');
 const seloImg = document.getElementById('selo-img');
 const seloContainer = document.getElementById('selo-container');
-const footerContainer = document.getElementById('info-inferior-wrapper'); // Rodapé
+const footerContainer = document.getElementById('info-inferior-wrapper');
 const qrcodeContainer = document.getElementById('qrcode-container');
 const qrcodeImg = document.getElementById('qrcode-img');
 const qrTexto = document.getElementById('qr-texto');
@@ -61,42 +61,50 @@ function preloadSingleImage(url) {
 async function preloadImagesForSlide(item) {
     const promises = [];
     
-    // CORREÇÃO: Adicionado fallbacks (_text) igual ao horizontal
+    // Imagem do Produto
     const imgProd = item.Imagem_produto || item.imagem_produto || item.imagem_produto_text;
     if (imgProd) promises.push(preloadSingleImage(imgProd));
     
+    // Selo
     const imgSelo = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
     if (imgSelo) promises.push(preloadSingleImage(imgSelo));
     
+    // QR Code
     const imgQR = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
     if (imgQR) promises.push(preloadSingleImage(imgQR));
     
     await Promise.all(promises);
 }
 
-// --- APLICAÇÃO DE CORES ---
+// --- APLICAÇÃO DE CORES (CORREÇÃO AQUI) ---
 function applyConfig(configC, configT) {
     const r = document.documentElement;
     
-    // Cores - Adicionado fallback _text
+    // COR 01: Fundo Principal
     const c01 = configT.cor_01 || configT.cor_01_text;
     if(c01) {
         r.style.setProperty('--cor-fundo-principal', c01);
         r.style.setProperty('--cor-bg-preco', c01);
     }
+    
+    // COR 02: Onda/Secundário
     const c02 = configT.cor_02 || configT.cor_02_text;
     if(c02) {
         r.style.setProperty('--cor-fundo-secundario', c02);
         r.style.setProperty('--cor-destaque-luz-borda', c02);
-        r.style.setProperty('--cor-seta-qr', c02);
     }
-    const c03 = configT.cor_03 || configT.cor_03_text;
-    if(c03) r.style.setProperty('--cor-faixas', c03);
 
-    // Textos
+    // COR 03: Botão do QR Code (CORREÇÃO: estava --cor-faixas, alterado para --cor-seta-qr)
+    const c03 = configT.cor_03 || configT.cor_03_text;
+    if(c03) {
+        r.style.setProperty('--cor-seta-qr', c03); 
+    }
+
+    // Textos Descrição
     const txt1 = configT.cor_texto_01 || configT.cor_texto_1 || configT.cor_texto_01_text;
-    if(txt1) r.style.setProperty('--cor-texto-descricao', txt1); // Nome da variável corrigida para match CSS
+    if(txt1) r.style.setProperty('--cor-texto-descricao', txt1);
     
+    // Textos Preço/Footer
     const txt2 = configT.cor_texto_02 || configT.cor_texto_2 || configT.cor_texto_02_text;
     if(txt2) {
         r.style.setProperty('--cor-texto-preco', txt2);
@@ -115,7 +123,7 @@ function applyConfig(configC, configT) {
 
 // --- ATUALIZA CONTEÚDO ---
 function updateContent(item) {
-    // 1. Imagem Produto (Robustez adicionada)
+    // 1. Imagem Produto
     const imgUrl = formatURL(item.Imagem_produto || item.imagem_produto || item.imagem_produto_text);
     if(produtoImg) produtoImg.src = imgUrl;
     if(produtoImgGhost) produtoImgGhost.src = imgUrl;
@@ -131,15 +139,13 @@ function updateContent(item) {
         if (qrUrl) {
             qrcodeImg.src = formatURL(qrUrl);
             qrcodeContainer.style.display = 'flex';
-        } else {
-             // Opcional: esconder se não tiver QR
         }
     }
     
     const txtQR = item.Texto_QR || item.texto_qr || item.texto_qr_text;
     if(qrTexto) qrTexto.textContent = txtQR || "Aproveite";
 
-    // 4. Selo (Robustez adicionada)
+    // 4. Selo
     const seloUrl = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
     
     if(seloUrl) {
@@ -154,7 +160,6 @@ function updateContent(item) {
 async function playEntrance() {
     elementosRotativos.forEach(el => { if(el) el.className = 'elemento-animado'; });
     
-    // O selo agora terá a animação correspondente no CSS
     if(seloContainer && seloContainer.style.display !== 'none') {
         seloContainer.classList.add('slideInDown');
     }
@@ -164,7 +169,6 @@ async function playEntrance() {
     setTimeout(() => { if(descricaoContainer) descricaoContainer.classList.add('slideInLeft'); }, 200);
     setTimeout(() => { if(precoContainer) precoContainer.classList.add('popIn'); }, 400);
     
-    // O footer inteiro sobe
     if(footerContainer) footerContainer.classList.add('slideInUp');
     
     await sleep(TEMPO_TRANSICAO);
@@ -204,7 +208,6 @@ async function init() {
         if (cached) {
             data = JSON.parse(cached);
             runApp(data);
-            // Fetch em background para atualizar cache
             fetchData().then(newData => {
                 if(newData) localStorage.setItem(CACHE_KEY, JSON.stringify(newData));
             });
