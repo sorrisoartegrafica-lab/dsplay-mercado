@@ -1,4 +1,4 @@
-/* style.css - Versão Final Vertical para GitHub */
+/* style.css - Versão Vertical Final (Com todas as animações corrigidas) */
 
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&display=swap');
 
@@ -244,7 +244,8 @@ html, body {
     object-fit: contain;
 }
 
-/* --- ANIMAÇÕES --- */
+/* --- ANIMAÇÕES (CORRIGIDAS E ADICIONADAS) --- */
+
 .fadeIn { animation: fadeIn 1.2s ease-out forwards; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -267,18 +268,35 @@ html, body {
     100% { opacity: 1; transform: scale(1) rotate(-5deg); }
 }
 
+/* ADICIONADO: slideInUp (Para o Produto) */
+.slideInUp { animation: slideInUp 0.8s ease-out forwards; }
+@keyframes slideInUp {
+    from { opacity: 0; transform: translateY(100px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ADICIONADO: slideInLeft (Para a Descrição) */
+.slideInLeft { animation: slideInLeft 0.8s ease-out forwards; }
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-100px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* ADICIONADO: popIn (Para o Preço) */
+.popIn { animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Mapeamento de ElasticUp para popIn se necessário, ou vice versa */
 .elasticUp { animation: elasticUp 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards; }
 @keyframes elasticUp {
     from { opacity: 0; transform: translateY(100px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-.slideInUpSimple { animation: slideInUpSimple 0.8s ease-out forwards; }
-@keyframes slideInUpSimple { 
-    from { opacity: 0; transform: translateY(40px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
-
+/* Animações de Saída */
 .slideOutUp { animation: slideOutUp 0.5s ease-in forwards; }
 @keyframes slideOutUp { to { opacity: 0; transform: translateY(-50px); } }
 
