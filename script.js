@@ -1,44 +1,40 @@
-// script.js - Versão Vertical Final (Corrigida: Proteção contra elementos nulos)
+// script.js - DIAGNÓSTICO (Template 01 Horizontal)
 
 const DEFAULT_VIDEO_ID = "1764628151406x909721458907021300"; 
 const API_URL_BASE = "https://bluemidia.digital/version-test/api/1.1/wf/get_video_data";
 
 // --- URL & API ---
 const queryParams = new URLSearchParams(window.location.search);
-let video_id = queryParams.get('video_id');
-if (!video_id) video_id = DEFAULT_VIDEO_ID;
-
+let video_id = queryParams.get('video_id') || DEFAULT_VIDEO_ID;
 const API_URL_FINAL = `${API_URL_BASE}?video_id=${video_id}`;
-const CACHE_KEY = `hortifruti_vert_${video_id}`;
 
-// Variáveis Globais
-let configCliente = {}, configTemplate = {}, produtos = [];
+console.log("🛠️ INICIANDO DIAGNÓSTICO...");
+console.log("🔗 URL API:", API_URL_FINAL);
 
-// Elementos DOM (Pode ser que alguns não existam no HTML, isso é normal)
+// Elementos DOM
 const logoImg = document.getElementById('logo-img');
 const logoContainer = document.getElementById('logo-container');
 const produtoImg = document.getElementById('produto-img');
-const produtoImgGhost = document.getElementById('produto-img-ghost');
-const produtoContainer = document.getElementById('produto-container');
 const descricaoTexto = document.getElementById('descricao-texto');
-const descricaoContainer = document.getElementById('descricao-container');
 const precoTexto = document.getElementById('preco-texto');
-const precoContainer = document.getElementById('preco-container');
 const seloImg = document.getElementById('selo-img');
 const seloContainer = document.getElementById('selo-container');
-const footerContainer = document.getElementById('footer-container');
-const qrcodeContainer = document.getElementById('qrcode-container');
 const qrcodeImg = document.getElementById('qrcode-img');
 const qrTexto = document.getElementById('qr-texto');
 
+// Elementos Animados (Verificação de existência)
+const produtoContainer = document.getElementById('produto-container');
+const descricaoContainer = document.getElementById('descricao-container');
+const precoContainer = document.getElementById('preco-container');
+const infoInferiorWrapper = document.getElementById('info-inferior-wrapper');
+
 const elementosRotativos = [
-    produtoContainer, seloContainer, descricaoContainer, precoContainer, qrcodeContainer
+    produtoContainer, seloContainer, descricaoContainer, precoContainer, infoInferiorWrapper
 ];
 
 const TEMPO_SLOT_TOTAL = 15000;
 const TEMPO_TRANSICAO = 800;
 
-// --- FUNÇÕES AUXILIARES ---
 function formatURL(url) {
     if (!url) return '';
     url = url.trim();
@@ -62,112 +58,117 @@ async function preloadImagesForSlide(item) {
     const promises = [];
     const imgProd = item.Imagem_produto || item.imagem_produto || item.imagem_produto_text;
     if (imgProd) promises.push(preloadSingleImage(imgProd));
-    
-    const imgSelo = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
-    if (imgSelo) promises.push(preloadSingleImage(imgSelo));
-    
-    const imgQR = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
-    if (imgQR) promises.push(preloadSingleImage(imgQR));
-    
     await Promise.all(promises);
 }
 
 // --- APLICAÇÃO DE CORES ---
 function applyConfig(configC, configT) {
+    console.log("🎨 APLICANDO CORES...");
+    console.log("-> Dados Template:", configT);
+    console.log("-> Dados Cliente:", configC);
+
     const r = document.documentElement;
     
-    console.log("Aplicando Cores:", configT);
-
+    // Tenta ler com ou sem _text
     const c01 = configT.cor_01 || configT.cor_01_text;
     if(c01) {
+        console.log("✅ Cor Fundo Aplicada:", c01);
         r.style.setProperty('--cor-fundo-principal', c01);
         r.style.setProperty('--cor-bg-preco', c01);
+    } else {
+        console.warn("⚠️ Cor Fundo (cor_01) não encontrada!");
     }
-
-    const c03 = configT.cor_03 || configT.cor_03_text;
-    if(c03) r.style.setProperty('--cor-faixas', c03);
-
+    
     const c02 = configT.cor_02 || configT.cor_02_text;
-    if(c02) {
-        r.style.setProperty('--cor-destaque-luz-borda', c02);
-        r.style.setProperty('--cor-seta-qr', c02);
-    }
+    if(c02) r.style.setProperty('--cor-fundo-secundario', c02);
+    
+    const c03 = configT.cor_03 || configT.cor_03_text;
+    if(c03) r.style.setProperty('--cor-seta-qr', c03);
 
+    // Textos
     const corTxt1 = configT.cor_texto_01 || configT.cor_texto_1 || configT.cor_texto_01_text;
-    if(corTxt1) r.style.setProperty('--cor-texto-placa', corTxt1);
+    if(corTxt1) r.style.setProperty('--cor-texto-descricao', corTxt1);
     
     const corTxt2 = configT.cor_texto_02 || configT.cor_texto_2 || configT.cor_texto_02_text;
-    if(corTxt2) {
-        r.style.setProperty('--cor-texto-preco', corTxt2);
-        r.style.setProperty('--cor-texto-footer', corTxt2);
-    }
+    if(corTxt2) r.style.setProperty('--cor-texto-preco', corTxt2);
 
-    // Logo (Protegido)
-    if (configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text) {
-        if(logoImg) logoImg.src = formatURL(configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text);
+    // Logo
+    const logoUrl = configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text;
+    if (logoUrl) {
+        console.log("✅ Logo encontrada:", logoUrl);
+        if(logoImg) logoImg.src = formatURL(logoUrl);
+        if(logoContainer) logoContainer.classList.add('fadeIn');
+    } else {
+        console.warn("⚠️ Logo não encontrada no Cliente!");
     }
-    
-    // Animações de entrada (PROTEGIDAS)
-    // AQUI ESTAVA O ERRO: Verificamos se o elemento existe antes de adicionar a classe
-    if(logoContainer) logoContainer.classList.add('fadeIn');
-    if(footerContainer) footerContainer.classList.add('fadeIn'); 
 }
 
 // --- ATUALIZA CONTEÚDO ---
 function updateContent(item) {
+    console.log("🔄 ATUALIZANDO PRODUTO:", item);
+
+    // Imagem
     const imgUrl = formatURL(item.Imagem_produto || item.imagem_produto || item.imagem_produto_text);
     if(produtoImg) produtoImg.src = imgUrl;
-    if(produtoImgGhost) produtoImgGhost.src = imgUrl;
-
-    if(descricaoTexto) descricaoTexto.textContent = item.nome || item.nome_text;
-    if(precoTexto) precoTexto.textContent = item.valor || item.valor_text;
     
-    const qrUrl = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
-    if(qrcodeImg && qrUrl) qrcodeImg.src = formatURL(qrUrl);
-    
-    const txtQR = item.Texto_QR || item.texto_qr || item.texto_qr_text;
-    if(qrTexto) qrTexto.textContent = txtQR || "Aproveite as ofertas";
+    // Nome
+    const nome = item.nome || item.nome_text;
+    if(descricaoTexto) descricaoTexto.textContent = nome;
+    console.log("-> Nome:", nome);
 
+    // Preço
+    const preco = item.valor || item.valor_text;
+    if(precoTexto) precoTexto.textContent = preco;
+    console.log("-> Preço:", preco);
+    
+    // Selo
     const seloUrl = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
     if(seloImg && seloUrl){
         seloImg.src = formatURL(seloUrl);
         if(seloContainer) seloContainer.style.display = 'flex';
     } else if(seloContainer) {
-        seloContainer.style.display = 'flex'; 
+        seloContainer.style.display = 'none';
     }
+
+    // QR Code
+    const qrUrl = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
+    if(qrcodeImg && qrUrl) qrcodeImg.src = formatURL(qrUrl);
+    
+    const txtQR = item.Texto_QR || item.texto_qr || item.texto_qr_text;
+    if(qrTexto) qrTexto.textContent = txtQR || "Venha Conferir";
 }
 
-// --- ANIMAÇÕES (Protegidas) ---
+// --- ANIMAÇÕES ---
 async function playEntrance() {
-    // Proteção: só tenta remover classes se o elemento existir
+    if(!elementosRotativos[0]) return;
     elementosRotativos.forEach(el => { if(el) el.className = 'elemento-animado'; });
     
-    if(seloContainer) seloContainer.classList.add('slideInDown');
-    if(produtoContainer) produtoContainer.classList.add('slideInUp');
-    
-    // Proteção nos timeouts também
-    setTimeout(() => { if(descricaoContainer) descricaoContainer.classList.add('slideInLeft'); }, 200);
-    setTimeout(() => { if(precoContainer) precoContainer.classList.add('popIn'); }, 400);
-    
-    if(qrcodeContainer) qrcodeContainer.classList.add('slideInUp');
+    if(produtoContainer) produtoContainer.classList.add('slideInLeft');
+    if(seloContainer) setTimeout(() => { seloContainer.classList.add('stampIn'); }, 200);
+    if(descricaoContainer) descricaoContainer.classList.add('slideInRight');
+    if(precoContainer) precoContainer.classList.add('elasticUp');
+    if(infoInferiorWrapper) infoInferiorWrapper.classList.add('slideInUp');
     
     await sleep(TEMPO_TRANSICAO);
 }
 
 async function playExit() {
+    if(!elementosRotativos[0]) return;
     elementosRotativos.forEach(el => { if(el) el.className = 'elemento-animado'; });
     
-    if(produtoContainer) produtoContainer.classList.add('slideOutDown');
-    if(descricaoContainer) descricaoContainer.classList.add('slideOutDown');
-    if(precoContainer) precoContainer.classList.add('slideOutDown');
-    if(seloContainer) seloContainer.classList.add('slideOutDown'); 
-    if(qrcodeContainer) qrcodeContainer.classList.add('slideOutDown');
+    if(produtoContainer) produtoContainer.classList.add('slideOutLeft');
+    if(seloContainer) seloContainer.classList.add('slideOutLeft');
+    if(descricaoContainer) descricaoContainer.classList.add('slideOutRight');
+    if(precoContainer) precoContainer.classList.add('slideOutRight');
+    if(infoInferiorWrapper) infoInferiorWrapper.classList.add('slideOutLeft');
     
     await sleep(500);
 }
 
 async function startRotation(items) {
     if(!items || items.length === 0) return;
+    console.log("▶️ Iniciando Rotação com", items.length, "itens.");
+    
     let tempoPorItem = Math.max(5000, TEMPO_SLOT_TOTAL / items.length); 
 
     for (let i = 0; i < items.length; i++) {
@@ -182,56 +183,37 @@ async function startRotation(items) {
 
 // --- INICIALIZAÇÃO ---
 async function init() {
-    let data = null;
-    try {
-        console.log("Iniciando Vertical. Buscando:", API_URL_FINAL);
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (cached) {
-            data = JSON.parse(cached);
-            runApp(data);
-            fetchData().then(newData => {
-                if(newData) localStorage.setItem(CACHE_KEY, JSON.stringify(newData));
-            });
-        } else {
-            data = await fetchData();
-            if(data) {
-                localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-                runApp(data);
-            }
-        }
-    } catch (e) { console.error("Erro Fatal:", e); }
-}
-
-async function fetchData() {
     try {
         const res = await fetch(API_URL_FINAL);
-        if(!res.ok) throw new Error("Erro na resposta da API: " + res.status);
-        return await res.json();
-    } catch (e) { 
-        console.error("Falha no fetch:", e);
-        return null; 
-    }
-}
+        const data = await res.json();
+        
+        console.log("📦 DADOS COMPLETOS DA API:", data); // AQUI VEREMOS TUDO
 
-function runApp(data) {
-    if (!data || !data.response) {
-        console.error("Dados inválidos recebidos:", data);
-        return;
-    }
-    configCliente = data.response.configCliente;
-    configTemplate = data.response.configTemplate;
-    produtos = data.response.produtos;
+        if (data && data.response) {
+            const configCliente = data.response.configCliente;
+            const configTemplate = data.response.configTemplate;
+            const produtos = data.response.produtos;
 
-    if(produtos) {
-        const validos = produtos.filter(p => p && (p.nome || p.nome_text));
-        console.log("Produtos válidos:", validos);
-        if(validos.length > 0) {
+            if(!configCliente || !configTemplate) {
+                console.error("❌ ERRO: Configuração faltando!");
+                return;
+            }
+
+            // Filtro para achar produtos válidos
+            // Tenta achar 'nome' ou 'nome_text'
+            const validos = produtos ? produtos.filter(p => p && (p.nome || p.nome_text)) : [];
+            
+            console.log("✅ Produtos Válidos encontrados:", validos);
+
             applyConfig(configCliente, configTemplate);
-            startRotation(validos);
-        } else {
-            console.warn("Nenhum produto válido encontrado.");
+            
+            if(validos.length > 0) {
+                startRotation(validos);
+            } else {
+                console.warn("⚠️ Nenhum produto válido encontrado. Verifique os nomes 'nome' ou 'nome_text' no console acima.");
+            }
         }
-    }
+    } catch (e) { console.error("❌ ERRO FATAL:", e); }
 }
 
 document.addEventListener('DOMContentLoaded', init);
