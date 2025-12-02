@@ -1,18 +1,7 @@
-// script.js - Versão Vertical Final (Com HOTFIX VISUAL para QR Code)
+// script.js - Vertical Final (Lógica Direta)
 
-const DEFAULT_VIDEO_ID = "1763501352257x910439018930896900"; 
+const DEFAULT_VIDEO_ID = "1764628151406x909721458907021300"; 
 const API_URL_BASE = "https://bluemidia.digital/version-test/api/1.1/wf/get_video_data";
-
-// --- URL & API ---
-const queryParams = new URLSearchParams(window.location.search);
-let video_id = queryParams.get('video_id');
-if (!video_id) video_id = DEFAULT_VIDEO_ID;
-
-const API_URL_FINAL = `${API_URL_BASE}?video_id=${video_id}`;
-const CACHE_KEY = `hortifruti_vert_${video_id}`;
-
-// Variáveis Globais
-let configCliente = {}, configTemplate = {}, produtos = [];
 
 // Elementos DOM
 const logoImg = document.getElementById('logo-img');
@@ -31,221 +20,187 @@ const qrcodeContainer = document.getElementById('qrcode-container');
 const qrcodeImg = document.getElementById('qrcode-img');
 const qrTexto = document.getElementById('qr-texto');
 
+// Elementos que entram e saem na animação
 const elementosRotativos = [
-    produtoContainer, seloContainer, descricaoContainer, precoContainer, footerContainer, qrcodeContainer
+    produtoContainer, seloContainer, descricaoContainer, precoContainer, footerContainer
 ];
 
 const TEMPO_SLOT_TOTAL = 15000;
 const TEMPO_TRANSICAO = 800;
 
-// --- FUNÇÕES AUXILIARES ---
-function formatURL(url) {
-    if (!url) return '';
-    url = url.trim();
-    if (url.startsWith('http') || url.startsWith('//')) return url.startsWith('//') ? 'https:' + url : url;
-    return 'https://' + url;
+// --- INICIALIZAÇÃO ---
+document.addEventListener('DOMContentLoaded', () => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const videoId = queryParams.get('video_id') || DEFAULT_VIDEO_ID;
+    
+    init(videoId);
+});
+
+async function init(videoId) {
+    console.log("🎬 Iniciando vídeo:", videoId);
+    try {
+        const res = await fetch(`${API_URL_BASE}?video_id=${videoId}`);
+        const data = await res.json();
+
+        if (data && data.response) {
+            const { configCliente, configTemplate, produtos } = data.response;
+            
+            // Aplica Configuração Geral (Cores e Logo)
+            applyConfig(configCliente, configTemplate);
+            
+            // Filtra produtos válidos (usando o nome exato do campo: nome_text)
+            const validos = produtos.filter(p => p && p.nome_text);
+            
+            if (validos.length > 0) {
+                console.log("✅ Produtos carregados:", validos.length);
+                startRotation(validos);
+            } else {
+                console.warn("⚠️ Nenhum produto válido encontrado.");
+            }
+        }
+    } catch (e) {
+        console.error("❌ Erro fatal:", e);
+    }
 }
 
-function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+// --- FUNÇÕES PRINCIPAIS ---
+
+function applyConfig(cliente, template) {
+    // Salva cor no cache para o próximo load
+    if(template.cor_01_text) localStorage.setItem('cache_cor_fundo', template.cor_01_text);
+
+    // Aplica Cores (Usando os nomes exatos com _text)
+    const root = document.documentElement;
+    
+    if(template.cor_01_text) {
+        root.style.setProperty('--cor-fundo-principal', template.cor_01_text);
+        root.style.setProperty('--cor-bg-preco', template.cor_01_text);
+    }
+    if(template.cor_02_text) {
+        root.style.setProperty('--cor-destaque-luz-borda', template.cor_02_text);
+        root.style.setProperty('--cor-seta-qr', template.cor_02_text);
+    }
+    if(template.cor_03_text) root.style.setProperty('--cor-faixas', template.cor_03_text);
+    if(template.cor_texto_01_text) root.style.setProperty('--cor-texto-descricao', template.cor_texto_01_text);
+    if(template.cor_texto_02_text) {
+        root.style.setProperty('--cor-texto-preco', template.cor_texto_02_text);
+        root.style.setProperty('--cor-texto-footer', template.cor_texto_02_text);
+    }
+
+    // Aplica Logo
+    if (cliente.logo_mercado_url_text) {
+        logoImg.src = formatURL(cliente.logo_mercado_url_text);
+    }
+    
+    // Mostra elementos estáticos
+    logoContainer.classList.add('fadeIn');
+}
+
+async function startRotation(items) {
+    let index = 0;
+    let tempoPorItem = Math.max(5000, TEMPO_SLOT_TOTAL / items.length);
+
+    while (true) { // Loop infinito
+        const item = items[index];
+        
+        // Preload e Atualização
+        await preloadImagesForSlide(item);
+        updateContent(item);
+        
+        // Animação Entrada
+        await playEntrance();
+        
+        // Tempo de exibição (descontando transições)
+        await sleep(tempoPorItem - TEMPO_TRANSICAO - 500);
+        
+        // Animação Saída
+        await playExit();
+        
+        // Próximo item
+        index = (index + 1) % items.length;
+    }
+}
+
+function updateContent(item) {
+    console.log("📦 Exibindo:", item.nome_text);
+
+    // 1. Imagens
+    const imgUrl = formatURL(item.imagem_produto_text);
+    produtoImg.src = imgUrl;
+    if(produtoImgGhost) produtoImgGhost.src = imgUrl;
+
+    // 2. Textos
+    descricaoTexto.textContent = item.nome_text;
+    precoTexto.textContent = item.valor_text;
+
+    // 3. QR Code (O CAMPO CRÍTICO)
+    // Usamos t_qr_produto_text pois é o que vimos no seu JSON
+    if (item.t_qr_produto_text) {
+        qrcodeImg.src = formatURL(item.t_qr_produto_text);
+        qrcodeContainer.style.display = 'flex'; 
+    } else {
+        qrcodeContainer.style.display = 'none'; // Esconde se não tiver
+    }
+    
+    if (qrTexto) qrTexto.textContent = item.texto_qr_text || "Aproveite";
+
+    // 4. Selo
+    if (item.selo_produto_text) {
+        seloImg.src = formatURL(item.selo_produto_text);
+        seloContainer.style.display = 'flex';
+    } else {
+        seloContainer.style.display = 'none';
+    }
+}
+
+// --- ANIMAÇÕES ---
+async function playEntrance() {
+    elementosRotativos.forEach(el => el.className = 'elemento-animado'); // Reset classes
+    
+    if(seloContainer.style.display !== 'none') seloContainer.classList.add('stampIn');
+    produtoContainer.classList.add('slideInUp');
+    
+    setTimeout(() => descricaoContainer.classList.add('slideInLeft'), 200);
+    setTimeout(() => precoContainer.classList.add('popIn'), 400);
+    
+    if(qrcodeContainer.style.display !== 'none') footerContainer.classList.add('slideInUp');
+    
+    await sleep(TEMPO_TRANSICAO);
+}
+
+async function playExit() {
+    produtoContainer.classList.add('slideOutDown');
+    descricaoContainer.classList.add('slideOutDown');
+    precoContainer.classList.add('slideOutDown');
+    seloContainer.classList.add('slideOutDown');
+    footerContainer.classList.add('slideOutDown');
+    await sleep(500);
+}
+
+// --- UTILITÁRIOS ---
+function formatURL(url) {
+    if (!url) return '';
+    if (url.startsWith('//')) return 'https:' + url;
+    if (!url.startsWith('http')) return 'https://' + url;
+    return url;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function preloadSingleImage(url) {
-    return new Promise((resolve) => {
-        if (!url) { resolve(); return; }
+    return new Promise(resolve => {
+        if (!url) return resolve();
         const img = new Image();
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
+        img.onload = resolve;
+        img.onerror = resolve;
         img.src = formatURL(url);
     });
 }
 
 async function preloadImagesForSlide(item) {
     const promises = [];
-    const imgProd = item.Imagem_produto || item.imagem_produto || item.imagem_produto_text;
-    if (imgProd) promises.push(preloadSingleImage(imgProd));
-    
-    const imgSelo = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
-    if (imgSelo) promises.push(preloadSingleImage(imgSelo));
-    
-    const imgQR = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
-    if (imgQR) promises.push(preloadSingleImage(imgQR));
-    
+    if (item.imagem_produto_text) promises.push(preloadSingleImage(item.imagem_produto_text));
+    if (item.selo_produto_text) promises.push(preloadSingleImage(item.selo_produto_text));
+    if (item.t_qr_produto_text) promises.push(preloadSingleImage(item.t_qr_produto_text));
     await Promise.all(promises);
 }
-
-// --- APLICAÇÃO DE CORES ---
-function applyConfig(configC, configT) {
-    const r = document.documentElement;
-    
-    // Mapeamento de Cores
-    const c01 = configT.cor_01 || configT.cor_01_text;
-    if(c01) {
-        r.style.setProperty('--cor-fundo-principal', c01);
-        r.style.setProperty('--cor-bg-preco', c01);
-    }
-
-    const c03 = configT.cor_03 || configT.cor_03_text;
-    if(c03) r.style.setProperty('--cor-faixas', c03);
-
-    const c02 = configT.cor_02 || configT.cor_02_text;
-    if(c02) {
-        r.style.setProperty('--cor-destaque-luz-borda', c02);
-        r.style.setProperty('--cor-seta-qr', c02);
-    }
-
-    const corTxt1 = configT.cor_texto_01 || configT.cor_texto_1 || configT.cor_texto_01_text;
-    if(corTxt1) r.style.setProperty('--cor-texto-placa', corTxt1);
-    
-    const corTxt2 = configT.cor_texto_02 || configT.cor_texto_2 || configT.cor_texto_02_text;
-    if(corTxt2) {
-        r.style.setProperty('--cor-texto-preco', corTxt2);
-        r.style.setProperty('--cor-texto-footer', corTxt2);
-    }
-
-    if (configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text) {
-        if(logoImg) logoImg.src = formatURL(configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text);
-    }
-    
-    if(logoContainer) logoContainer.classList.add('fadeIn');
-    if(footerContainer) footerContainer.classList.add('fadeIn');
-}
-
-// --- ATUALIZA CONTEÚDO ---
-function updateContent(item) {
-    console.log("🔄 Item:", item.nome);
-
-    const imgUrl = formatURL(item.Imagem_produto || item.imagem_produto || item.imagem_produto_text);
-    if(produtoImg) produtoImg.src = imgUrl;
-    if(produtoImgGhost) produtoImgGhost.src = imgUrl;
-
-    if(descricaoTexto) descricaoTexto.textContent = item.nome || item.nome_text;
-    if(precoTexto) precoTexto.textContent = item.valor || item.valor_text;
-    
-    // --- QR CODE ---
-    const qrUrl = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
-    
-    if (qrUrl) {
-        console.log("✅ QR Encontrado:", qrUrl);
-        if(qrcodeImg) qrcodeImg.src = formatURL(qrUrl);
-        
-        // --- HOTFIX VISUAL: Força o estilo aqui para garantir que apareça ---
-        if(qrcodeContainer) {
-            qrcodeContainer.style.display = 'flex';
-            qrcodeContainer.style.backgroundColor = 'white'; // Garante fundo branco
-            qrcodeContainer.style.padding = '0.5vh';
-            qrcodeContainer.style.borderRadius = '0.8vh';
-            qrcodeContainer.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
-            // Garante tamanho mínimo se o CSS falhar
-            if(!qrcodeContainer.style.width) qrcodeContainer.style.width = '8.5vh';
-            if(!qrcodeContainer.style.height) qrcodeContainer.style.height = '8.5vh';
-        }
-    } else {
-        // Se não tiver QR, podemos esconder ou deixar visível para debug
-        // qrcodeContainer.style.display = 'none';
-    }
-    
-    const txtQR = item.Texto_QR || item.texto_qr || item.texto_qr_text;
-    if(qrTexto) qrTexto.textContent = txtQR || "Aproveite as ofertas";
-
-    const seloUrl = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
-    if(seloImg && seloUrl){
-        seloImg.src = formatURL(seloUrl);
-        if(seloContainer) seloContainer.style.display = 'flex';
-    } else if(seloContainer) {
-        seloContainer.style.display = 'flex'; 
-    }
-}
-
-// --- ANIMAÇÕES ---
-async function playEntrance() {
-    elementosRotativos.forEach(el => { if(el) el.className = 'elemento-animado'; });
-    
-    if(seloContainer) seloContainer.classList.add('slideInDown');
-    if(produtoContainer) produtoContainer.classList.add('slideInUp');
-    setTimeout(() => { if(descricaoContainer) descricaoContainer.classList.add('slideInLeft'); }, 200);
-    setTimeout(() => { if(precoContainer) precoContainer.classList.add('popIn'); }, 400);
-    
-    if(footerContainer) footerContainer.classList.add('slideInUp'); 
-    
-    await sleep(TEMPO_TRANSICAO);
-}
-
-async function playExit() {
-    elementosRotativos.forEach(el => { if(el) el.className = 'elemento-animado'; });
-    
-    if(produtoContainer) produtoContainer.classList.add('slideOutDown');
-    if(descricaoContainer) descricaoContainer.classList.add('slideOutDown');
-    if(precoContainer) precoContainer.classList.add('slideOutDown');
-    if(seloContainer) seloContainer.classList.add('slideOutDown'); 
-    if(footerContainer) footerContainer.classList.add('slideOutDown');
-    
-    await sleep(500);
-}
-
-async function startRotation(items) {
-    if(!items || items.length === 0) return;
-    let tempoPorItem = Math.max(5000, TEMPO_SLOT_TOTAL / items.length); 
-
-    for (let i = 0; i < items.length; i++) {
-        await preloadImagesForSlide(items[i]);
-        updateContent(items[i]);
-        await playEntrance();
-        await sleep(tempoPorItem - TEMPO_TRANSICAO - 500);
-        if (i < items.length) await playExit();
-    }
-    startRotation(items);
-}
-
-// --- INICIALIZAÇÃO ---
-async function init() {
-    let data = null;
-    try {
-        console.log("Iniciando Vertical. Buscando:", API_URL_FINAL);
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (cached) {
-            data = JSON.parse(cached);
-            runApp(data);
-            fetchData().then(newData => {
-                if(newData) localStorage.setItem(CACHE_KEY, JSON.stringify(newData));
-            });
-        } else {
-            data = await fetchData();
-            if(data) {
-                localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-                runApp(data);
-            }
-        }
-    } catch (e) { console.error("Erro Fatal:", e); }
-}
-
-async function fetchData() {
-    try {
-        const res = await fetch(API_URL_FINAL);
-        if(!res.ok) throw new Error("Erro API: " + res.status);
-        return await res.json();
-    } catch (e) { 
-        console.error("Falha no fetch:", e);
-        return null; 
-    }
-}
-
-function runApp(data) {
-    if (!data || !data.response) {
-        console.error("Dados inválidos:", data);
-        return;
-    }
-    configCliente = data.response.configCliente;
-    configTemplate = data.response.configTemplate;
-    produtos = data.response.produtos;
-
-    if(produtos) {
-        const validos = produtos.filter(p => p && (p.nome || p.nome_text));
-        if(validos.length > 0) {
-            applyConfig(configCliente, configTemplate);
-            startRotation(validos);
-        } else {
-            console.warn("Nenhum produto válido encontrado.");
-        }
-    }
-}
-
-document.addEventListener('DOMContentLoaded', init);
