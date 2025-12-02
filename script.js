@@ -1,28 +1,23 @@
-// script.js - Versão Vertical Final (Corrigido ID do Footer + Proteção de Erros)
+// script.js - Vertical Final (URL Corrigida + Proteção de Erros)
 
 const DEFAULT_VIDEO_ID = "1763501352257x910439018930896900"; 
-// URL CORRETA (bluemidia.digital)
+// ATENÇÃO: URL ATUALIZADA PARA O SEU DOMÍNIO PRÓPRIO
 const API_URL_BASE = "https://bluemidia.digital/version-test/api/1.1/wf/get_video_data";
 
 // --- URL & API ---
 const queryParams = new URLSearchParams(window.location.search);
-let video_id = queryParams.get('video_id');
-if (!video_id) {
-    console.log("Usando ID padrão de teste.");
-    video_id = DEFAULT_VIDEO_ID;
-}
-
+let video_id = queryParams.get('video_id') || DEFAULT_VIDEO_ID;
 const API_URL_FINAL = `${API_URL_BASE}?video_id=${video_id}`;
 const CACHE_KEY = `hortifruti_vert_${video_id}`;
 
 // Variáveis Globais
 let configCliente = {}, configTemplate = {}, produtos = [];
 
-// --- ELEMENTOS DO DOM (Mapeamento Correto) ---
+// Elementos DOM
 const logoImg = document.getElementById('logo-img');
 const logoContainer = document.getElementById('logo-container');
 const produtoImg = document.getElementById('produto-img');
-const produtoImgGhost = document.getElementById('produto-img-ghost'); // Pode não existir
+const produtoImgGhost = document.getElementById('produto-img-ghost');
 const produtoContainer = document.getElementById('produto-container');
 const descricaoTexto = document.getElementById('descricao-texto');
 const descricaoContainer = document.getElementById('descricao-container');
@@ -30,17 +25,13 @@ const precoTexto = document.getElementById('preco-texto');
 const precoContainer = document.getElementById('preco-container');
 const seloImg = document.getElementById('selo-img');
 const seloContainer = document.getElementById('selo-container');
-
-// CORREÇÃO IMPORTANTE: O ID correto no seu HTML é 'info-inferior-wrapper'
-const footerContainer = document.getElementById('info-inferior-wrapper'); 
-
+const footerContainer = document.getElementById('footer-container');
 const qrcodeContainer = document.getElementById('qrcode-container');
 const qrcodeImg = document.getElementById('qrcode-img');
 const qrTexto = document.getElementById('qr-texto');
 
-// Lista de elementos animados
 const elementosRotativos = [
-    produtoContainer, seloContainer, descricaoContainer, precoContainer, footerContainer, qrcodeContainer
+    produtoContainer, seloContainer, descricaoContainer, precoContainer, qrcodeContainer
 ];
 
 const TEMPO_SLOT_TOTAL = 15000;
@@ -68,7 +59,6 @@ function preloadSingleImage(url) {
 
 async function preloadImagesForSlide(item) {
     const promises = [];
-    // Tenta pegar com ou sem _text
     const imgProd = item.Imagem_produto || item.imagem_produto || item.imagem_produto_text;
     if (imgProd) promises.push(preloadSingleImage(imgProd));
     
@@ -81,12 +71,11 @@ async function preloadImagesForSlide(item) {
     await Promise.all(promises);
 }
 
-// --- APLICAÇÃO DE CORES E LOGO ---
+// --- APLICAÇÃO DE CORES ---
 function applyConfig(configC, configT) {
     const r = document.documentElement;
-    console.log("🎨 Aplicando Cores...", configT);
-
-    // Mapeamento de Cores (com fallback)
+    
+    // Mapeamento corrigido (tenta com e sem _text)
     const c01 = configT.cor_01 || configT.cor_01_text;
     if(c01) {
         r.style.setProperty('--cor-fundo-principal', c01);
@@ -102,37 +91,33 @@ function applyConfig(configC, configT) {
         r.style.setProperty('--cor-seta-qr', c02);
     }
 
-    // Textos
-    const txt1 = configT.cor_texto_01 || configT.cor_texto_1 || configT.cor_texto_01_text;
-    if(txt1) r.style.setProperty('--cor-texto-placa', txt1);
+    const corTxt1 = configT.cor_texto_01 || configT.cor_texto_1 || configT.cor_texto_01_text;
+    if(corTxt1) r.style.setProperty('--cor-texto-placa', corTxt1);
     
-    const txt2 = configT.cor_texto_02 || configT.cor_texto_2 || configT.cor_texto_02_text;
-    if(txt2) {
-        r.style.setProperty('--cor-texto-preco', txt2);
-        r.style.setProperty('--cor-texto-footer', txt2);
+    const corTxt2 = configT.cor_texto_02 || configT.cor_texto_2 || configT.cor_texto_02_text;
+    if(corTxt2) {
+        r.style.setProperty('--cor-texto-preco', corTxt2);
+        r.style.setProperty('--cor-texto-footer', corTxt2);
     }
 
-    // Logo (com proteção)
     const logoUrl = configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text;
-    if (logoUrl && logoImg) {
+    if (logoUrl) {
         logoImg.src = formatURL(logoUrl);
     }
     
-    // Animações de entrada (COM PROTEÇÃO CONTRA CRASH)
-    if(logoContainer) logoContainer.classList.add('fadeIn');
-    if(footerContainer) footerContainer.classList.add('fadeIn');
+    logoContainer.classList.add('fadeIn');
+    footerContainer.classList.add('fadeIn');
 }
 
 // --- ATUALIZA CONTEÚDO ---
 function updateContent(item) {
-    console.log("🔄 Atualizando Produto:", item);
-
     const imgUrl = formatURL(item.Imagem_produto || item.imagem_produto || item.imagem_produto_text);
-    if(produtoImg) produtoImg.src = imgUrl;
+    produtoImg.src = imgUrl;
     if(produtoImgGhost) produtoImgGhost.src = imgUrl;
 
-    if(descricaoTexto) descricaoTexto.textContent = item.nome || item.nome_text;
-    if(precoTexto) precoTexto.textContent = item.valor || item.valor_text;
+    // AQUI ESTAVA UM PONTO CRÍTICO: Garantir que lemos 'nome' ou 'nome_text'
+    descricaoTexto.textContent = item.nome || item.nome_text;
+    precoTexto.textContent = item.valor || item.valor_text;
     
     const qrUrl = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
     if(qrcodeImg && qrUrl) qrcodeImg.src = formatURL(qrUrl);
@@ -143,37 +128,30 @@ function updateContent(item) {
     const seloUrl = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
     if(seloImg && seloUrl){
         seloImg.src = formatURL(seloUrl);
-        if(seloContainer) seloContainer.style.display = 'flex';
-    } else if(seloContainer) {
-        seloContainer.style.display = 'flex'; // Mantém visível mesmo sem selo (opcional)
+        seloContainer.style.display = 'flex';
+    } else {
+        seloContainer.style.display = 'flex'; 
     }
 }
 
-// --- ANIMAÇÕES (COM PROTEÇÃO) ---
+// --- ANIMAÇÕES (Mantidas) ---
 async function playEntrance() {
-    // Remove classes antigas apenas de elementos que existem
-    elementosRotativos.forEach(el => { if(el) el.className = 'elemento-animado'; });
-    
-    if(seloContainer) seloContainer.classList.add('slideInDown');
-    if(produtoContainer) produtoContainer.classList.add('slideInUp');
-    
-    setTimeout(() => { if(descricaoContainer) descricaoContainer.classList.add('slideInLeft'); }, 200);
-    setTimeout(() => { if(precoContainer) precoContainer.classList.add('popIn'); }, 400);
-    
-    if(footerContainer) footerContainer.classList.add('slideInUp'); 
-    
+    elementosRotativos.forEach(el => el.className = 'elemento-animado');
+    seloContainer.classList.add('slideInDown');
+    produtoContainer.classList.add('slideInUp');
+    setTimeout(() => { descricaoContainer.classList.add('slideInLeft'); }, 200);
+    setTimeout(() => { precoContainer.classList.add('popIn'); }, 400);
+    qrcodeContainer.classList.add('slideInUp');
     await sleep(TEMPO_TRANSICAO);
 }
 
 async function playExit() {
-    elementosRotativos.forEach(el => { if(el) el.className = 'elemento-animado'; });
-    
-    if(produtoContainer) produtoContainer.classList.add('slideOutDown');
-    if(descricaoContainer) descricaoContainer.classList.add('slideOutDown');
-    if(precoContainer) precoContainer.classList.add('slideOutDown');
-    if(seloContainer) seloContainer.classList.add('slideOutDown'); 
-    if(footerContainer) footerContainer.classList.add('slideOutDown');
-    
+    elementosRotativos.forEach(el => el.className = 'elemento-animado');
+    produtoContainer.classList.add('slideOutDown');
+    descricaoContainer.classList.add('slideOutDown');
+    precoContainer.classList.add('slideOutDown');
+    seloContainer.classList.add('slideOutDown'); 
+    qrcodeContainer.classList.add('slideOutDown');
     await sleep(500);
 }
 
@@ -210,13 +188,13 @@ async function init() {
                 runApp(data);
             }
         }
-    } catch (e) { console.error("Erro Fatal:", e); }
+    } catch (e) { console.error("Erro no init:", e); }
 }
 
 async function fetchData() {
     try {
         const res = await fetch(API_URL_FINAL);
-        if(!res.ok) throw new Error("Erro na resposta da API: " + res.status);
+        if(!res.ok) throw new Error("Erro API: " + res.status);
         return await res.json();
     } catch (e) { 
         console.error("Falha no fetch:", e);
@@ -226,26 +204,23 @@ async function fetchData() {
 
 function runApp(data) {
     if (!data || !data.response) {
-        console.error("Dados inválidos recebidos:", data);
+        console.error("Dados inválidos:", data);
         return;
     }
     configCliente = data.response.configCliente;
     configTemplate = data.response.configTemplate;
     produtos = data.response.produtos;
 
-    console.log("📦 Produtos Recebidos:", produtos);
-
     if(produtos) {
-        // Filtro robusto: aceita 'nome' OU 'nome_text'
+        // Filtra garantindo que tenha nome (com ou sem _text)
         const validos = produtos.filter(p => p && (p.nome || p.nome_text));
+        console.log("Produtos válidos:", validos); // DEBUG NO CONSOLE
         
-        console.log("✅ Produtos Válidos:", validos);
-
         if(validos.length > 0) {
             applyConfig(configCliente, configTemplate);
             startRotation(validos);
         } else {
-            console.warn("⚠️ Nenhum produto válido encontrado. Verifique se o campo 'nome' está preenchido no Bubble.");
+            console.warn("Nenhum produto válido encontrado. Verifique se o campo 'nome' está preenchido no Bubble.");
         }
     }
 }
