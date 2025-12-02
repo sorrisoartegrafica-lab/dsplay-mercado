@@ -1,6 +1,6 @@
-// script.js - Versão Vertical Final (Correção QR Code Definitiva)
+// script.js - Versão Vertical Final (Com HOTFIX VISUAL para QR Code)
 
-const DEFAULT_VIDEO_ID = "1764628151406x909721458907021300"; 
+const DEFAULT_VIDEO_ID = "1763501352257x910439018930896900"; 
 const API_URL_BASE = "https://bluemidia.digital/version-test/api/1.1/wf/get_video_data";
 
 // --- URL & API ---
@@ -26,7 +26,7 @@ const precoTexto = document.getElementById('preco-texto');
 const precoContainer = document.getElementById('preco-container');
 const seloImg = document.getElementById('selo-img');
 const seloContainer = document.getElementById('selo-container');
-const footerContainer = document.getElementById('info-inferior-wrapper');
+const footerContainer = document.getElementById('info-inferior-wrapper'); 
 const qrcodeContainer = document.getElementById('qrcode-container');
 const qrcodeImg = document.getElementById('qrcode-img');
 const qrTexto = document.getElementById('qr-texto');
@@ -66,8 +66,7 @@ async function preloadImagesForSlide(item) {
     const imgSelo = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
     if (imgSelo) promises.push(preloadSingleImage(imgSelo));
     
-    // Tenta todas as variações de QR
-    const imgQR = item.QR_produto || item.qr_produto || item.t_qr_produto_text || item.t_qr_produto;
+    const imgQR = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
     if (imgQR) promises.push(preloadSingleImage(imgQR));
     
     await Promise.all(promises);
@@ -77,6 +76,7 @@ async function preloadImagesForSlide(item) {
 function applyConfig(configC, configT) {
     const r = document.documentElement;
     
+    // Mapeamento de Cores
     const c01 = configT.cor_01 || configT.cor_01_text;
     if(c01) {
         r.style.setProperty('--cor-fundo-principal', c01);
@@ -101,17 +101,18 @@ function applyConfig(configC, configT) {
         r.style.setProperty('--cor-texto-footer', corTxt2);
     }
 
-    const logoUrl = configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text;
-    if (logoUrl && logoImg) {
-        logoImg.src = formatURL(logoUrl);
+    if (configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text) {
+        if(logoImg) logoImg.src = formatURL(configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text);
     }
     
     if(logoContainer) logoContainer.classList.add('fadeIn');
     if(footerContainer) footerContainer.classList.add('fadeIn');
 }
 
-// --- ATUALIZA CONTEÚDO (CORREÇÃO DO QR CODE AQUI) ---
+// --- ATUALIZA CONTEÚDO ---
 function updateContent(item) {
+    console.log("🔄 Item:", item.nome);
+
     const imgUrl = formatURL(item.Imagem_produto || item.imagem_produto || item.imagem_produto_text);
     if(produtoImg) produtoImg.src = imgUrl;
     if(produtoImgGhost) produtoImgGhost.src = imgUrl;
@@ -119,17 +120,27 @@ function updateContent(item) {
     if(descricaoTexto) descricaoTexto.textContent = item.nome || item.nome_text;
     if(precoTexto) precoTexto.textContent = item.valor || item.valor_text;
     
-    // --- CORREÇÃO QR CODE: Tenta TODAS as variações ---
-    const qrUrl = item.QR_produto || item.qr_produto || item.t_qr_produto_text || item.t_qr_produto;
+    // --- QR CODE ---
+    const qrUrl = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
     
     if (qrUrl) {
-        console.log("QR Code encontrado:", qrUrl); // DEBUG
+        console.log("✅ QR Encontrado:", qrUrl);
         if(qrcodeImg) qrcodeImg.src = formatURL(qrUrl);
-        if(qrcodeContainer) qrcodeContainer.style.display = 'flex'; // Garante que aparece
+        
+        // --- HOTFIX VISUAL: Força o estilo aqui para garantir que apareça ---
+        if(qrcodeContainer) {
+            qrcodeContainer.style.display = 'flex';
+            qrcodeContainer.style.backgroundColor = 'white'; // Garante fundo branco
+            qrcodeContainer.style.padding = '0.5vh';
+            qrcodeContainer.style.borderRadius = '0.8vh';
+            qrcodeContainer.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
+            // Garante tamanho mínimo se o CSS falhar
+            if(!qrcodeContainer.style.width) qrcodeContainer.style.width = '8.5vh';
+            if(!qrcodeContainer.style.height) qrcodeContainer.style.height = '8.5vh';
+        }
     } else {
-        console.warn("QR Code não encontrado para este item.");
-        // Opcional: Esconder se não tiver
-        // if(qrcodeContainer) qrcodeContainer.style.display = 'none';
+        // Se não tiver QR, podemos esconder ou deixar visível para debug
+        // qrcodeContainer.style.display = 'none';
     }
     
     const txtQR = item.Texto_QR || item.texto_qr || item.texto_qr_text;
@@ -152,6 +163,7 @@ async function playEntrance() {
     if(produtoContainer) produtoContainer.classList.add('slideInUp');
     setTimeout(() => { if(descricaoContainer) descricaoContainer.classList.add('slideInLeft'); }, 200);
     setTimeout(() => { if(precoContainer) precoContainer.classList.add('popIn'); }, 400);
+    
     if(footerContainer) footerContainer.classList.add('slideInUp'); 
     
     await sleep(TEMPO_TRANSICAO);
