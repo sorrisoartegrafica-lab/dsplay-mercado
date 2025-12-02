@@ -1,18 +1,24 @@
-// script.js - Vertical Final (Corrigido IDs e URL)
+// script.js - Versão Vertical Final (Corrigido ID do Footer + Proteção de Erros)
 
 const DEFAULT_VIDEO_ID = "1763501352257x910439018930896900"; 
 // URL CORRETA (bluemidia.digital)
 const API_URL_BASE = "https://bluemidia.digital/version-test/api/1.1/wf/get_video_data";
 
+// --- URL & API ---
 const queryParams = new URLSearchParams(window.location.search);
-let video_id = queryParams.get('video_id') || DEFAULT_VIDEO_ID;
+let video_id = queryParams.get('video_id');
+if (!video_id) {
+    console.log("Usando ID padrão de teste.");
+    video_id = DEFAULT_VIDEO_ID;
+}
+
 const API_URL_FINAL = `${API_URL_BASE}?video_id=${video_id}`;
 const CACHE_KEY = `hortifruti_vert_${video_id}`;
 
 // Variáveis Globais
 let configCliente = {}, configTemplate = {}, produtos = [];
 
-// Elementos DOM (Mapeados conforme seu HTML Vertical)
+// --- ELEMENTOS DO DOM (Mapeamento Correto) ---
 const logoImg = document.getElementById('logo-img');
 const logoContainer = document.getElementById('logo-container');
 const produtoImg = document.getElementById('produto-img');
@@ -25,7 +31,7 @@ const precoContainer = document.getElementById('preco-container');
 const seloImg = document.getElementById('selo-img');
 const seloContainer = document.getElementById('selo-container');
 
-// CORREÇÃO: Usando 'info-inferior-wrapper' em vez de 'footer-container'
+// CORREÇÃO IMPORTANTE: O ID correto no seu HTML é 'info-inferior-wrapper'
 const footerContainer = document.getElementById('info-inferior-wrapper'); 
 
 const qrcodeContainer = document.getElementById('qrcode-container');
@@ -34,7 +40,7 @@ const qrTexto = document.getElementById('qr-texto');
 
 // Lista de elementos animados
 const elementosRotativos = [
-    produtoContainer, seloContainer, descricaoContainer, precoContainer, footerContainer
+    produtoContainer, seloContainer, descricaoContainer, precoContainer, footerContainer, qrcodeContainer
 ];
 
 const TEMPO_SLOT_TOTAL = 15000;
@@ -62,23 +68,25 @@ function preloadSingleImage(url) {
 
 async function preloadImagesForSlide(item) {
     const promises = [];
-    const imgProd = item.Imagem_produto || item.imagem_produto;
+    // Tenta pegar com ou sem _text
+    const imgProd = item.Imagem_produto || item.imagem_produto || item.imagem_produto_text;
     if (imgProd) promises.push(preloadSingleImage(imgProd));
     
-    const imgSelo = item.Selo_Produto || item.selo_produto;
+    const imgSelo = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
     if (imgSelo) promises.push(preloadSingleImage(imgSelo));
     
-    const imgQR = item.QR_produto || item.qr_produto;
+    const imgQR = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
     if (imgQR) promises.push(preloadSingleImage(imgQR));
     
     await Promise.all(promises);
 }
 
-// --- APLICAÇÃO DE CORES ---
+// --- APLICAÇÃO DE CORES E LOGO ---
 function applyConfig(configC, configT) {
     const r = document.documentElement;
-    
-    // Cores
+    console.log("🎨 Aplicando Cores...", configT);
+
+    // Mapeamento de Cores (com fallback)
     const c01 = configT.cor_01 || configT.cor_01_text;
     if(c01) {
         r.style.setProperty('--cor-fundo-principal', c01);
@@ -95,59 +103,63 @@ function applyConfig(configC, configT) {
     }
 
     // Textos
-    const txt1 = configT.cor_texto_01 || configT.cor_texto_1;
-    if(txt1) r.style.setProperty('--cor-texto-placa', txt1); // Atenção: CSS deve usar --cor-texto-descricao ou --cor-texto-placa? Ajuste no CSS se necessário. No script horizontal usamos descricao.
+    const txt1 = configT.cor_texto_01 || configT.cor_texto_1 || configT.cor_texto_01_text;
+    if(txt1) r.style.setProperty('--cor-texto-placa', txt1);
     
-    const txt2 = configT.cor_texto_02 || configT.cor_texto_2;
+    const txt2 = configT.cor_texto_02 || configT.cor_texto_2 || configT.cor_texto_02_text;
     if(txt2) {
         r.style.setProperty('--cor-texto-preco', txt2);
         r.style.setProperty('--cor-texto-footer', txt2);
     }
 
-    // Logo
+    // Logo (com proteção)
     const logoUrl = configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text;
-    if (logoUrl) {
-        if(logoImg) logoImg.src = formatURL(logoUrl);
+    if (logoUrl && logoImg) {
+        logoImg.src = formatURL(logoUrl);
     }
     
-    // Animações de entrada
+    // Animações de entrada (COM PROTEÇÃO CONTRA CRASH)
     if(logoContainer) logoContainer.classList.add('fadeIn');
     if(footerContainer) footerContainer.classList.add('fadeIn');
 }
 
 // --- ATUALIZA CONTEÚDO ---
 function updateContent(item) {
-    const imgUrl = formatURL(item.Imagem_produto || item.imagem_produto);
+    console.log("🔄 Atualizando Produto:", item);
+
+    const imgUrl = formatURL(item.Imagem_produto || item.imagem_produto || item.imagem_produto_text);
     if(produtoImg) produtoImg.src = imgUrl;
     if(produtoImgGhost) produtoImgGhost.src = imgUrl;
 
     if(descricaoTexto) descricaoTexto.textContent = item.nome || item.nome_text;
     if(precoTexto) precoTexto.textContent = item.valor || item.valor_text;
     
-    const qrUrl = item.QR_produto || item.qr_produto;
+    const qrUrl = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
     if(qrcodeImg && qrUrl) qrcodeImg.src = formatURL(qrUrl);
     
-    const txtQR = item.Texto_QR || item.texto_qr;
-    if(qrTexto) qrTexto.textContent = txtQR || "Aproveite";
+    const txtQR = item.Texto_QR || item.texto_qr || item.texto_qr_text;
+    if(qrTexto) qrTexto.textContent = txtQR || "Aproveite as ofertas";
 
-    const seloUrl = item.Selo_Produto || item.selo_produto;
+    const seloUrl = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
     if(seloImg && seloUrl){
         seloImg.src = formatURL(seloUrl);
         if(seloContainer) seloContainer.style.display = 'flex';
     } else if(seloContainer) {
-        seloContainer.style.display = 'none'; // Esconde se não tiver selo
+        seloContainer.style.display = 'flex'; // Mantém visível mesmo sem selo (opcional)
     }
 }
 
-// --- ANIMAÇÕES ---
+// --- ANIMAÇÕES (COM PROTEÇÃO) ---
 async function playEntrance() {
+    // Remove classes antigas apenas de elementos que existem
     elementosRotativos.forEach(el => { if(el) el.className = 'elemento-animado'; });
     
     if(seloContainer) seloContainer.classList.add('slideInDown');
     if(produtoContainer) produtoContainer.classList.add('slideInUp');
+    
     setTimeout(() => { if(descricaoContainer) descricaoContainer.classList.add('slideInLeft'); }, 200);
     setTimeout(() => { if(precoContainer) precoContainer.classList.add('popIn'); }, 400);
-    // Footer/QR entra de baixo
+    
     if(footerContainer) footerContainer.classList.add('slideInUp'); 
     
     await sleep(TEMPO_TRANSICAO);
@@ -204,7 +216,7 @@ async function init() {
 async function fetchData() {
     try {
         const res = await fetch(API_URL_FINAL);
-        if(!res.ok) throw new Error("Erro API: " + res.status);
+        if(!res.ok) throw new Error("Erro na resposta da API: " + res.status);
         return await res.json();
     } catch (e) { 
         console.error("Falha no fetch:", e);
@@ -214,20 +226,26 @@ async function fetchData() {
 
 function runApp(data) {
     if (!data || !data.response) {
-        console.error("Dados inválidos:", data);
+        console.error("Dados inválidos recebidos:", data);
         return;
     }
     configCliente = data.response.configCliente;
     configTemplate = data.response.configTemplate;
     produtos = data.response.produtos;
 
+    console.log("📦 Produtos Recebidos:", produtos);
+
     if(produtos) {
+        // Filtro robusto: aceita 'nome' OU 'nome_text'
         const validos = produtos.filter(p => p && (p.nome || p.nome_text));
+        
+        console.log("✅ Produtos Válidos:", validos);
+
         if(validos.length > 0) {
             applyConfig(configCliente, configTemplate);
             startRotation(validos);
         } else {
-            console.warn("Nenhum produto válido encontrado.");
+            console.warn("⚠️ Nenhum produto válido encontrado. Verifique se o campo 'nome' está preenchido no Bubble.");
         }
     }
 }
