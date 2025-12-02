@@ -1,28 +1,26 @@
-// script.js - Lógica Final para GitHub Pages
+// script.js - Template 01 Horizontal (Final e Corrigido)
 
-// API do Bubble
-const API_URL_BASE = "https://bluemdia.bubbleapps.io/version-test/api/1.1/wf/get_video_data";
+const DEFAULT_VIDEO_ID = "1763501352257x910439018930896900"; // Substitua por um ID real seu se quiser
+// CORREÇÃO: URL correta do seu domínio
+const API_URL_BASE = "https://bluemidia.digital/version-test/api/1.1/wf/get_video_data";
 
-// ID de Teste (Caso não passem nada na URL)
-const DEFAULT_VIDEO_ID = "1763501352257x910439018930896900";
-
-// Captura ID da URL
 const queryParams = new URLSearchParams(window.location.search);
 let video_id = queryParams.get('video_id');
 if (!video_id) {
-    console.log("Usando ID padrão de teste.");
+    console.log("Usando ID padrão.");
     video_id = DEFAULT_VIDEO_ID;
 }
 
 const API_URL_FINAL = `${API_URL_BASE}?video_id=${video_id}`;
-const CACHE_KEY = `vertical_data_${video_id}`;
+const CACHE_KEY = `template01_horiz_${video_id}`;
 
-// Variáveis e Elementos
 let configCliente = {}, configTemplate = {}, produtos = [];
+
+// Elementos DOM
 const logoImg = document.getElementById('logo-img');
 const logoContainer = document.getElementById('logo-container');
 const produtoImg = document.getElementById('produto-img');
-const produtoImgGhost = document.getElementById('produto-img-ghost'); 
+const produtoImgGhost = document.getElementById('produto-img-ghost');
 const produtoContainer = document.getElementById('produto-container');
 const descricaoTexto = document.getElementById('descricao-texto');
 const descricaoContainer = document.getElementById('descricao-container');
@@ -43,8 +41,9 @@ const TEMPO_TRANSICAO = 800;
 
 function formatURL(url) {
     if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return 'https:' + url;
+    url = url.trim();
+    if (url.startsWith('http') || url.startsWith('//')) return url.startsWith('//') ? 'https:' + url : url;
+    return 'https://' + url;
 }
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 function preloadSingleImage(url) {
@@ -56,69 +55,92 @@ function preloadSingleImage(url) {
         img.src = formatURL(url);
     });
 }
+
 async function preloadImagesForSlide(item) {
     const promises = [];
-    if (item.imagem_produto_text) promises.push(preloadSingleImage(item.imagem_produto_text));
-    if (item.selo_produto_text) promises.push(preloadSingleImage(item.selo_produto_text));
-    if (item.t_qr_produto_text) promises.push(preloadSingleImage(item.t_qr_produto_text));
+    const imgProd = item.Imagem_produto || item.imagem_produto || item.imagem_produto_text;
+    if (imgProd) promises.push(preloadSingleImage(imgProd));
+    
+    const imgSelo = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
+    if (imgSelo) promises.push(preloadSingleImage(imgSelo));
+    
+    const imgQR = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
+    if (imgQR) promises.push(preloadSingleImage(imgQR));
+    
     await Promise.all(promises);
 }
 
 function applyConfig(configC, configT) {
     const r = document.documentElement;
-    r.style.setProperty('--cor-fundo-principal', configT.cor_01_text);
-    r.style.setProperty('--cor-fundo-secundario', configT.cor_02_text);
-    r.style.setProperty('--cor-texto-descricao', configT.cor_texto_01_text);
-    r.style.setProperty('--cor-texto-preco', configT.cor_texto_02_text);
-    r.style.setProperty('--cor-seta-qr', configT.cor_03_text || '#00A300');
+    // Mapeamento robusto para cores (com ou sem _text)
+    const c01 = configT.cor_01 || configT.cor_01_text;
+    if(c01) {
+        r.style.setProperty('--cor-fundo-principal', c01);
+        r.style.setProperty('--cor-bg-preco', c01);
+    }
+    
+    const c02 = configT.cor_02 || configT.cor_02_text;
+    if(c02) r.style.setProperty('--cor-fundo-secundario', c02);
+    
+    const c03 = configT.cor_03 || configT.cor_03_text;
+    if(c03) r.style.setProperty('--cor-seta-qr', c03);
 
-    if (configC.logo_mercado_url_text) {
-        logoImg.src = formatURL(configC.logo_mercado_url_text);
+    const corTxt1 = configT.cor_texto_01 || configT.cor_texto_1 || configT.cor_texto_01_text;
+    if(corTxt1) r.style.setProperty('--cor-texto-descricao', corTxt1);
+    
+    const corTxt2 = configT.cor_texto_02 || configT.cor_texto_2 || configT.cor_texto_02_text;
+    if(corTxt2) r.style.setProperty('--cor-texto-preco', corTxt2);
+
+    const logoUrl = configC.LOGO_MERCADO_URL || configC.logo_mercado_url_text;
+    if (logoUrl) {
+        logoImg.src = formatURL(logoUrl);
         logoContainer.classList.add('fadeIn');
     }
 }
 
 function updateContent(item) {
-    const imgUrl = formatURL(item.imagem_produto_text);
+    const imgUrl = formatURL(item.Imagem_produto || item.imagem_produto || item.imagem_produto_text);
     produtoImg.src = imgUrl;
     if(produtoImgGhost) produtoImgGhost.src = imgUrl;
 
-    descricaoTexto.textContent = item.nome_text;
-    precoTexto.textContent = item.valor_text;
+    descricaoTexto.textContent = item.nome || item.nome_text;
+    precoTexto.textContent = item.valor || item.valor_text;
     
-    if(item.selo_produto_text){
-        seloImg.src = formatURL(item.selo_produto_text);
+    // Selo
+    const seloUrl = item.Selo_Produto || item.selo_produto || item.selo_produto_text;
+    if(seloUrl){
+        seloImg.src = formatURL(seloUrl);
         seloContainer.style.display = 'flex';
     } else {
         seloContainer.style.display = 'none';
     }
 
-    if(item.t_qr_produto_text) qrcodeImg.src = formatURL(item.t_qr_produto_text);
-    qrTexto.textContent = item.texto_qr_text || "Confira!";
+    // QR Code e Texto
+    const qrUrl = item.QR_produto || item.qr_produto || item.t_qr_produto_text;
+    if(qrUrl) qrcodeImg.src = formatURL(qrUrl);
+    
+    const txtQR = item.Texto_QR || item.texto_qr || item.texto_qr_text;
+    qrTexto.textContent = txtQR || "Venha Conferir";
 }
 
+// --- ANIMAÇÕES (Mantidas) ---
 async function playEntrance() {
     elementosRotativos.forEach(el => el.className = 'elemento-animado');
-    
-    produtoContainer.classList.add('slideInDown');
+    produtoContainer.classList.add('slideInLeft');
     setTimeout(() => { seloContainer.classList.add('stampIn'); }, 200);
-    
-    descricaoContainer.classList.add('elasticUp');
+    descricaoContainer.classList.add('slideInRight');
     precoContainer.classList.add('elasticUp');
-    infoInferiorWrapper.classList.add('slideInUpSimple');
-    
+    infoInferiorWrapper.classList.add('slideInUp');
     await sleep(TEMPO_TRANSICAO);
 }
 
 async function playExit() {
     elementosRotativos.forEach(el => el.className = 'elemento-animado');
-    
-    produtoContainer.classList.add('slideOutUp');
-    seloContainer.classList.add('slideOutUp');
-    descricaoContainer.classList.add('slideOutDown');
-    precoContainer.classList.add('slideOutDown');
-    infoInferiorWrapper.classList.add('slideOutDown');
-    
+    produtoContainer.classList.add('slideOutLeft');
+    seloContainer.classList.add('slideOutLeft');
+    descricaoContainer.classList.add('slideOutRight');
+    precoContainer.classList.add('slideOutRight');
+    infoInferiorWrapper.classList.add('slideOutLeft');
     await sleep(500);
 }
 
@@ -139,6 +161,7 @@ async function startRotation(items) {
 async function init() {
     let data = null;
     try {
+        console.log("Iniciando Template 01. Buscando:", API_URL_FINAL);
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
             data = JSON.parse(cached);
@@ -153,27 +176,37 @@ async function init() {
                 runApp(data);
             }
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Erro no init:", e); }
 }
 
 async function fetchData() {
     try {
         const res = await fetch(API_URL_FINAL);
-        if(!res.ok) throw new Error("Erro API");
+        if(!res.ok) throw new Error("Erro API: " + res.status);
         return await res.json();
-    } catch (e) { return null; }
+    } catch (e) { 
+        console.error("Falha no fetch:", e);
+        return null; 
+    }
 }
 
 function runApp(data) {
-    if (!data || !data.response) return;
+    if (!data || !data.response) {
+        console.error("Dados inválidos:", data);
+        return;
+    }
     configCliente = data.response.configCliente;
     configTemplate = data.response.configTemplate;
     produtos = data.response.produtos;
 
     if(produtos) {
-        const validos = produtos.filter(p => p !== null);
+        const validos = produtos.filter(p => p && (p.nome || p.nome_text));
         applyConfig(configCliente, configTemplate);
-        startRotation(validos);
+        if(validos.length > 0) {
+            startRotation(validos);
+        } else {
+            console.warn("Nenhum produto válido encontrado.");
+        }
     }
 }
 
